@@ -1,0 +1,90 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens from Figma "SMRTVN" (Components sections, nodes 11:1200 and 4:1025).
+ * Figma variable names are noted next to each token.
+ */
+@theme {
+  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Screen editor (4:1025) uses Inter: font family/Font 1 */
+  --font-inter: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand */
+  --color-primary: #6495ed; /* color/azure/66 */
+  --color-primary-hover: #2563eb; /* color/azure/53 */
+  --color-primary-soft: #eff6ff; /* color/grey/97 */
+  --color-primary-tint: rgb(100 149 237 / 0.1); /* color/azure/66 10% */
+  /* Product management screens (187:4283) use an indigo brand */
+  --color-brand: #635bff; /* color/blue/68 */
+  --color-brand-tint: rgb(99 91 255 / 0.1); /* color/blue/68 10% */
+
+  /* Surfaces & lines */
+  --color-canvas: #f3f4f8; /* app background behind cards (dashboard) */
+  --color-surface: #ffffff; /* color/white/solid */
+  --color-surface-muted: #f7f9fc; /* color/grey/98 */
+  --color-surface-hover: #f3f4f8; /* color/grey/96 */
+  --color-line: #e3e8ee; /* color/grey/91 */
+  --color-line-soft: #f3f4f8; /* color/grey/96 */
+  --color-line-strong: #cbd5e1; /* color/azure/84 */
+  --color-bullet: #cbd5e1; /* color/azure/84 */
+
+  /* Text */
+  --color-ink-black: #111827; /* color/azure/11 */
+  --color-ink-navy: #1a1f36; /* color/blue/16 */
+  --color-ink-strong: #1f2937; /* color/azure/17 */
+  --color-ink-heading: #334155; /* color/azure/27 */
+  --color-ink: #475569; /* color/azure/35 */
+  --color-ink-gray: #4b5563; /* color/azure/34 */
+  --color-ink-muted: #64748b; /* color/azure/47 */
+  --color-ink-soft: #6b7280; /* color/grey/46 */
+  --color-ink-subtle: #9ca3af; /* color/azure/65 */
+
+  /* Status */
+  --color-success: #22c55e; /* color/spring green/45 */
+  --color-success-soft: #dcfce7; /* color/grey/93 */
+  --color-success-strong: #15803d; /* color/spring green/29 */
+  --color-danger: #ef4444; /* color/red/60 */
+  --color-danger-soft: #fee2e2; /* color/grey/94 */
+  --color-danger-strong: #b91c1c; /* color/red/42 */
+  --color-warning: #f97316; /* color/orange/53 */
+  --color-warning-light: #fb923c; /* color/orange/61 */
+  --color-warning-soft: #ffedd5; /* color/grey/92 */
+  --color-warning-strong: #c2410c; /* color/orange/40 */
+
+  /* Dashboard (1097:42239) */
+  --color-revenue-end: #7b61ff; /* color/blue/69, revenue card gradient end */
+  --color-revenue-glow: #93c5fd; /* color/azure/78 */
+  --color-avatar-end: #8b5cf6; /* color/violet/66, avatar ring gradient end */
+
+  /* Login (1097:12965) */
+  --color-cta: #5f93ec;
+  --color-cta-border: #e2e8f0;
+  --color-input-error: #dc2626; /* color/red/51 */
+  --color-toast: #2d3438; /* Black */
+  --color-toast-error-tint: rgb(240 67 73 / 0.1); /* Accent/Error 10% */
+
+  /* Elevation */
+  --shadow-card: 0 4px 20px -2px rgb(0 0 0 / 0.05);
+  --shadow-hairline: 0 1px 1px rgb(0 0 0 / 0.05);
+  --shadow-primary: 0 10px 15px -3px rgb(59 130 246 / 0.2), 0 4px 6px -4px rgb(59 130 246 / 0.2);
+  --shadow-primary-sm: 0 4px 6px -1px rgb(59 130 246 / 0.2), 0 2px 4px -2px rgb(59 130 246 / 0.2);
+  --shadow-glow-success: 0 0 10px 0 rgb(34 197 94 / 0.5);
+  --shadow-glow-danger: 0 0 10px 0 rgb(239 68 68 / 0.5);
+  --shadow-primary-hairline: 0 1px 1px rgb(59 130 246 / 0.2);
+  --shadow-accent: 0 10px 15px -3px rgb(59 130 246 / 0.3), 0 4px 6px -4px rgb(59 130 246 / 0.3);
+  --shadow-device: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+  --shadow-swatch-hover: 0 0 0 2px rgb(95 147 236 / 0.2), 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-toast: 0 16px 20px -8px rgb(3 5 18 / 0.1);
+  --shadow-popover: 0 4px 20px -2px rgb(0 0 0 / 0.28); /* Pengumuman panel (1097:21859) */
+}
+
+@layer base {
+  body {
+    @apply bg-surface-muted font-sans text-ink antialiased;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
