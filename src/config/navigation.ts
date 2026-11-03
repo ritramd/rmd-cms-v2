@@ -18,8 +18,25 @@ export type NavEntry = NavLink | NavGroup | 'divider'
 
 export const navigation: NavEntry[] = [
   { label: 'Dashboard', icon: 'dashboard', to: '/' },
-  { label: 'Produk', icon: 'inventory', to: '/product' },
-  { label: 'Penjualan', icon: 'receipt', to: '/sales-recap' },
+  // Figma: Produk group with "Atur Produk" (1097:21992). v1's "Manage Produk" lives at /product.
+  {
+    label: 'Produk',
+    icon: 'inventory',
+    children: [
+      { label: 'Atur Produk', to: '/product' },
+      // Not in Figma yet; same path as v1's "Kategori Produk".
+      { label: 'Kategori Produk', to: '/product/categories' },
+    ],
+  },
+  // Figma: Penjualan group (1097:20207). v1 has these pages under the same paths.
+  {
+    label: 'Penjualan',
+    icon: 'receipt',
+    children: [
+      { label: 'Vending Sales', to: '/vending-sales' },
+      { label: 'Vending Sales Digital', to: '/sales-digital' },
+    ],
+  },
   { label: 'Configs', icon: 'tune', to: '/vm-config' },
   { label: 'Stok', icon: 'assignment', to: '/stok-vending' },
   {

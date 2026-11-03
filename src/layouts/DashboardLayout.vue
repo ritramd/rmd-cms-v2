@@ -18,7 +18,10 @@ const userName = getSession()?.name ?? 'Admin'
     <!-- No mobile menu in the design yet; the sidebar shows from the lg breakpoint. -->
     <AppSidebar class="sticky top-0 hidden h-screen shrink-0 lg:flex" />
     <div class="flex min-w-0 flex-1 flex-col">
-      <AppHeader v-model:search="search" :title="title" :subtitle="subtitle" :user-name="userName" />
+      <!-- Pages whose design has a different header (e.g. Atur Produk) pass their own. -->
+      <slot name="header">
+        <AppHeader v-model:search="search" :title="title" :subtitle="subtitle" :user-name="userName" />
+      </slot>
       <main class="flex flex-col gap-8 px-8 pb-12">
         <slot />
       </main>

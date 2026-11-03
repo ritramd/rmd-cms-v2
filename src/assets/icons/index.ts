@@ -60,6 +60,9 @@ export type IconName =
   | 'zoom-out-active'
   | 'smartphone'
   | 'smartphone-active'
+  // Compact page header (Atur Produk, 1097:22028)
+  | 'search-sm'
+  | 'bell-outline'
   | LineIconName
 
 /** Stroke-drawn vectors (`line-*`). Unlike the glyph icons above, these export upright. */
@@ -82,6 +85,11 @@ export type LineIconName =
   | 'line-cube'
   | 'line-bar-chart'
   | 'line-users'
+  // Not in Figma: drawn to match line-pencil for the Kategori Produk delete action.
+  | 'line-trash'
+  | 'line-trash-active'
+  // Reset filters on Vending Sales detail (1097:33355)
+  | 'line-rotate-ccw'
 
 const files = import.meta.glob<string>('./*.svg', { eager: true, import: 'default' })
 

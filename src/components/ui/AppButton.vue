@@ -5,7 +5,8 @@ import AppIcon from './AppIcon.vue'
 
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'secondary'
+    /** "danger" isn't in Figma; same shape as primary for destructive confirmations. */
+    variant?: 'primary' | 'secondary' | 'danger'
     icon?: IconName
     type?: 'button' | 'submit' | 'reset'
     disabled?: boolean
@@ -22,7 +23,9 @@ withDefaults(
     :class="
       variant === 'primary'
         ? 'bg-primary py-[11px] font-bold text-white shadow-primary enabled:hover:bg-primary-hover'
-        : 'border border-line bg-surface py-2.5 font-medium text-ink shadow-hairline enabled:hover:bg-surface-muted'
+        : variant === 'danger'
+          ? 'bg-danger py-[11px] font-bold text-white enabled:hover:bg-danger-strong'
+          : 'border border-line bg-surface py-2.5 font-medium text-ink shadow-hairline enabled:hover:bg-surface-muted'
     "
   >
     <AppIcon v-if="icon" :name="icon" class="my-[5px] shrink-0" />

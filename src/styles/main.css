@@ -56,12 +56,24 @@
   --color-revenue-glow: #93c5fd; /* color/azure/78 */
   --color-avatar-end: #8b5cf6; /* color/violet/66, avatar ring gradient end */
 
+  /* Product form upload area (1097:23189) */
+  --color-dropzone: #f4f9fa;
+  --color-dropzone-border: #e0e1e4;
+
   /* Login (1097:12965) */
   --color-cta: #5f93ec;
   --color-cta-border: #e2e8f0;
   --color-input-error: #dc2626; /* color/red/51 */
   --color-toast: #2d3438; /* Black */
   --color-toast-error-tint: rgb(240 67 73 / 0.1); /* Accent/Error 10% */
+
+  /* Penjualan (1097:20195) */
+  --color-ink-deep: #0f172a;
+  --color-ink-placeholder: #94a3b8;
+  --color-link: #4f46e5;
+  --color-action-dark: #1e293b;
+  --color-line-faint: #f1f5f9;
+  --color-row-line: #f8fafc;
 
   /* Elevation */
   --shadow-card: 0 4px 20px -2px rgb(0 0 0 / 0.05);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Figma: "Kelola Vending" group (1097:42255)
+// Figma: "Kelola Vending" group (1097:42255), "Produk" group (1097:21994)
 import { useId } from 'vue'
 import { icons, isFlippedGlyph, type IconName } from '@/assets/icons'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -7,6 +7,7 @@ import TintedIcon from '@/components/ui/TintedIcon.vue'
 
 defineProps<{
   label: string
+  /** Any 24px single-color icon; it's painted gray when closed and blue when open/hovered. */
   icon: IconName
 }>()
 
@@ -25,17 +26,13 @@ const panelId = useId()
       @click="open = !open"
     >
       <span class="flex items-center gap-4">
-        <span class="relative my-1 size-6 shrink-0">
-          <AppIcon :name="icon" class="absolute inset-0" :class="!open && 'invisible group-hover:visible'" />
-          <!-- Figma only ships the blue icon; while closed it's painted in the idle gray like other items. -->
-          <TintedIcon
-            v-if="!open"
-            :src="icons[icon]"
-            color="bg-ink-muted"
-            class="absolute inset-0 group-hover:invisible"
-            :class="isFlippedGlyph(icon) && '-scale-y-100'"
-          />
-        </span>
+        <!-- Painted via mask so one asset covers both states (Figma ships some group icons in one color only). -->
+        <TintedIcon
+          :src="icons[icon]"
+          :color="open ? 'bg-primary' : 'bg-ink-muted group-hover:bg-primary'"
+          class="my-1 size-6 shrink-0"
+          :class="isFlippedGlyph(icon) && '-scale-y-100'"
+        />
         <span
           class="text-base"
           :class="open ? 'font-semibold text-ink-strong' : 'font-medium text-ink-muted group-hover:text-primary'"

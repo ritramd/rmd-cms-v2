@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import announcementIcon from '@/assets/announcement/tab-announcement.svg'
 import notificationIcon from '@/assets/announcement/tab-notification.svg'
 import AnnouncementItem from '@/components/announcement/AnnouncementItem.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import NotificationButton from '@/components/ui/NotificationButton.vue'
 import TintedIcon from '@/components/ui/TintedIcon.vue'
 import { ApiError } from '@/services/api'
@@ -11,6 +12,14 @@ import { fetchAnnouncements, fetchUnreadCount, markAnnouncementRead } from '@/se
 import type { Announcement, AnnouncementCategory } from '@/types/announcement'
 
 type Tab = 'notifications' | 'announcements'
+
+withDefaults(
+  defineProps<{
+    /** "card": dashboard header (1097:12400); "round": compact page header (1097:22037). */
+    trigger?: 'card' | 'round'
+  }>(),
+  { trigger: 'card' },
+)
 
 const root = ref<HTMLElement | null>(null)
 const panelId = useId()
@@ -101,12 +110,25 @@ const tabs: { id: Tab; label: string; icon: string }[] = [
 <template>
   <div ref="root" class="relative">
     <NotificationButton
+      v-if="trigger === 'card'"
       :has-unread="unreadCount > 0"
       :label="unreadCount > 0 ? `Notifikasi, ${unreadCount} belum dibaca` : 'Notifikasi'"
       :aria-expanded="open"
       :aria-controls="panelId"
       @click="toggleOpen"
     />
+    <button
+      v-else
+      type="button"
+      :aria-label="unreadCount > 0 ? `Notifikasi, ${unreadCount} belum dibaca` : 'Notifikasi'"
+      :aria-expanded="open"
+      :aria-controls="panelId"
+      class="relative flex size-10 items-center justify-center rounded-full bg-surface shadow-hairline transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      @click="toggleOpen"
+    >
+      <AppIcon name="bell-outline" />
+      <span v-if="unreadCount > 0" class="absolute top-1.5 right-1.5 size-2 rounded-full bg-danger ring-2 ring-white" />
+    </button>
 
     <div
       v-if="open"

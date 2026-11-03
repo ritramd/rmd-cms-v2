@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Figma: aside.w-20 (1097:42242)
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import SidebarNavGroup from '@/components/layout/SidebarNavGroup.vue'
 import SidebarNavItem from '@/components/ui/SidebarNavItem.vue'
@@ -9,8 +9,20 @@ import { isNavGroup, navigation, type NavGroup } from '@/config/navigation'
 
 const route = useRoute()
 
+const navPaths = navigation.flatMap((entry) =>
+  entry === 'divider' ? [] : isNavGroup(entry) ? entry.children.map((c) => c.to) : [entry.to],
+)
+
+// The most specific matching link wins, so /product/categories highlights "Kategori Produk", not "Atur Produk".
+const activePath = computed(() => {
+  const matches = navPaths.filter((path) =>
+    path === '/' ? route.path === '/' : route.path === path || route.path.startsWith(`${path}/`),
+  )
+  return matches.sort((a, b) => b.length - a.length)[0] ?? null
+})
+
 function isActive(path: string) {
-  return path === '/' ? route.path === '/' : route.path === path || route.path.startsWith(`${path}/`)
+  return activePath.value === path
 }
 
 // Groups start expanded when one of their pages is open.

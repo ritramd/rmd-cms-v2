@@ -12,6 +12,33 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'dashboard', component: () => import('@/pages/DashboardPage.vue') },
+    // Same path as v1's "Manage Produk"; sidebar: Produk → Atur Produk.
+    { path: '/product', name: 'products', component: () => import('@/pages/ProductListPage.vue') },
+    // Same path as v1; sidebar: Produk → Kategori Produk.
+    {
+      path: '/product/categories',
+      name: 'product-categories',
+      component: () => import('@/pages/ProductCategoryPage.vue'),
+    },
+    // Same paths as v1; sidebar: Penjualan → Vending Sales / Vending Sales Digital.
+    {
+      path: '/vending-sales',
+      name: 'vending-sales',
+      component: () => import('@/pages/SalesMachinesPage.vue'),
+      props: { channel: 'vending' },
+    },
+    {
+      path: '/vending-sales/:machine',
+      name: 'vending-sales-machine',
+      component: () => import('@/pages/MachineSalesPage.vue'),
+      props: true,
+    },
+    {
+      path: '/sales-digital',
+      name: 'sales-digital',
+      component: () => import('@/pages/SalesMachinesPage.vue'),
+      props: { channel: 'digital' },
+    },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     // Same path as v1 so existing links keep working.
     {
