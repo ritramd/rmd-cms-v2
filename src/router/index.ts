@@ -39,6 +39,16 @@ export const router = createRouter({
       component: () => import('@/pages/SalesMachinesPage.vue'),
       props: { channel: 'digital' },
     },
+    // Same path as v1; sidebar: Stok → Stok Vending.
+    { path: '/stok-vending', name: 'stock-vending', component: () => import('@/pages/StockVendingPage.vue') },
+    // Same paths as v1 (the machine page also takes v1's trailing name slug); sidebar: Stok → Riwayat Stok Ulang.
+    { path: '/histori-stok-ulang', name: 'restock-history', component: () => import('@/pages/RestockHistoryPage.vue') },
+    {
+      path: '/histori-stok-ulang/:machine/:slug?',
+      name: 'restock-history-machine',
+      component: () => import('@/pages/RestockHistoryPage.vue'),
+      props: (route) => ({ machine: route.params.machine }),
+    },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     // Same path as v1 so existing links keep working.
     {

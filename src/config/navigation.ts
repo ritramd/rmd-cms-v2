@@ -38,7 +38,15 @@ export const navigation: NavEntry[] = [
     ],
   },
   { label: 'Configs', icon: 'tune', to: '/vm-config' },
-  { label: 'Stok', icon: 'assignment', to: '/stok-vending' },
+  // Figma: Stok group (1097:34077). Same paths as v1.
+  {
+    label: 'Stok',
+    icon: 'assignment',
+    children: [
+      { label: 'Stok Vending', to: '/stok-vending' },
+      { label: 'Riwayat Stok Ulang', to: '/histori-stok-ulang' },
+    ],
+  },
   {
     label: 'Kelola Vending',
     icon: 'storefront',

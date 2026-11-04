@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Figma: stock bar inside Component 9 (11:1006); colors follow the final dashboard (1097:42239).
 import { computed } from 'vue'
-import { LOW_STOCK_PERCENT } from '@/utils/stock'
+import { stockBand } from '@/utils/stock'
 
 const props = defineProps<{
   /** 0–100, or null when unknown. */
@@ -11,10 +11,9 @@ const props = defineProps<{
 const percent = computed(() => (props.value === null ? null : Math.round(Math.min(Math.max(props.value, 0), 100))))
 
 // Dashboard samples: 32% red, 49% orange, 85% / 95% green.
-const barColor = computed(() => {
-  const p = percent.value ?? 0
-  return p < LOW_STOCK_PERCENT ? 'bg-danger' : p < 70 ? 'bg-warning-light' : 'bg-success'
-})
+const barColor = computed(
+  () => ({ low: 'bg-danger', mid: 'bg-warning-light', high: 'bg-success' })[stockBand(percent.value ?? 0)],
+)
 </script>
 
 <template>

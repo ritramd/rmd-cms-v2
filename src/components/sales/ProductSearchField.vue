@@ -133,7 +133,7 @@ function onKeydown(event: KeyboardEvent) {
       >
         <span
           class="flex size-4 shrink-0 items-center justify-center rounded border"
-          :class="isSelected(product) ? 'border-link bg-link' : 'border-line-strong bg-surface'"
+          :class="isSelected(product) ? 'border-primary-hover bg-primary-hover' : 'border-line-strong bg-surface'"
           aria-hidden="true"
         >
           <svg v-if="isSelected(product)" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">

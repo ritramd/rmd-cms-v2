@@ -5,7 +5,7 @@ import EntriesFooter from '@/components/ui/EntriesFooter.vue'
 import EntriesSelect from '@/components/ui/EntriesSelect.vue'
 import type { SaleRecord, SaleSortKey } from '@/types/sales'
 import { formatRupiah } from '@/utils/format'
-import SortHeader from './SortHeader.vue'
+import SortHeader from '@/components/ui/SortHeader.vue'
 
 defineProps<{
   sales: SaleRecord[]
