@@ -3,7 +3,7 @@
 import avatarPlaceholder from '@/assets/demo/avatar-admin.png'
 import NotificationMenu from '@/components/announcement/NotificationMenu.vue'
 import SearchInput from '@/components/layout/SearchInput.vue'
-import UserAvatar from '@/components/layout/UserAvatar.vue'
+import ProfileMenu from '@/components/profile/ProfileMenu.vue'
 
 defineProps<{
   title: string
@@ -24,8 +24,8 @@ const search = defineModel<string>('search', { default: '' })
       <div class="flex items-center gap-4">
         <SearchInput v-model="search" placeholder="Cari mesin, lokasi, atau transaksi..." class="w-80 max-w-[50vw]" />
         <NotificationMenu />
-        <!-- Placeholder photo until the user API exposes an avatar. -->
-        <UserAvatar :src="avatarPlaceholder" :name="userName" />
+        <!-- User avatar with profile dropdown (Figma 1097:12648) -->
+        <ProfileMenu :src="avatarPlaceholder" :name="userName" />
       </div>
     </div>
   </header>

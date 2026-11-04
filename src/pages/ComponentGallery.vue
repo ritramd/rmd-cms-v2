@@ -24,6 +24,14 @@ import NotificationBell from '@/components/products/NotificationBell.vue'
 import ProductPagination from '@/components/products/ProductPagination.vue'
 import ProductSidebarItem from '@/components/products/ProductSidebarItem.vue'
 import ProductTableRow from '@/components/products/ProductTableRow.vue'
+import RedeemVoucherCard from '@/components/billing/RedeemVoucherCard.vue'
+import PromotionPaymentModal from '@/components/billing/PromotionPaymentModal.vue'
+import ProfileMenu from '@/components/profile/ProfileMenu.vue'
+import ChangePasswordModal from '@/components/profile/ChangePasswordModal.vue'
+import TutorialTable from '@/components/support/TutorialTable.vue'
+import TutorialFormModal from '@/components/support/TutorialFormModal.vue'
+import type { GuideItem } from '@/types/support'
+import type { VoucherData } from '@/types/billing'
 import type { IconName } from '@/assets/icons'
 import type { CatalogProduct } from '@/types/product'
 import type { ScreenProduct } from '@/types/screen'
@@ -52,6 +60,16 @@ const navItems: { icon: NavIconName; label: string }[] = [
 ]
 const activeNav = ref<NavIconName>('dashboard')
 const activeSub = ref('Daftar vending')
+
+const showBillingModal = ref(false)
+const showPasswordModal = ref(false)
+const sampleVoucher: VoucherData = {
+  voucher: 'PROMO-SAMPLE-2026',
+  clientId: 1,
+  duration: 1,
+  vmId: '1,2',
+  billingAmount: 600000,
+}
 
 const machines: VendingMachine[] = [
   { id: '829232', name: 'VM-001 Snack', type: 'snack', location: 'Lobby Utama', status: 'online', stock: 85, revenue: 1250000 },
@@ -106,6 +124,15 @@ function resetColors() {
   accentColor.value = defaultColors.accent
   screenColor.value = defaultColors.screen
 }
+
+const sampleGuides: GuideItem[] = [
+  { id: 1, title: 'Membaca pengumuman di papan pengumuman', type: 'tutorial', status: 'publish', file: '230815103625_Membaca-Pengumuman di Announcement Board.pdf' },
+  { id: 2, title: 'Pengambilan Data Sales Vending Machine', type: 'tutorial', status: 'publish', file: '230815102939_Pengambilan-Data Sales Vending Machine.pdf' },
+  { id: 3, title: 'Error CMOS', type: 'troubleshoot', status: 'publish', file: '230815110533_TROUBLESHOOT-CMOS.pdf' },
+]
+const galleryTutorialPage = ref(1)
+const galleryTutorialPerPage = ref(10)
+const showTutorialModal = ref(false)
 </script>
 
 <template>
@@ -294,6 +321,93 @@ function resetColors() {
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- Billing & Voucher Promotion Preview (Figma 1097:27746 & 1097:27910) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Billing & Voucher Redeem (Figma 1097:27746 & 1097:27910)
+          </h2>
+          <p class="text-sm text-ink-muted">Tampilan Langganan Habis dan Popup Konfirmasi Pembayaran Promosi</p>
+        </div>
+        <AppButton variant="primary" @click="showBillingModal = true">
+          Buka Modal Konfirmasi
+        </AppButton>
+      </div>
+
+      <div class="rounded-xl bg-canvas p-6">
+        <RedeemVoucherCard @submit="showBillingModal = true" />
+      </div>
+
+      <PromotionPaymentModal
+        :open="showBillingModal"
+        :voucher="sampleVoucher"
+        @close="showBillingModal = false"
+        @confirm="showBillingModal = false"
+      />
+    </section>
+
+    <!-- Profile Popover & Change Password Dialog Preview (Figma 1097:12648 & 1097:41893) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Profile Dropdown & Ganti Password (Figma 1097:12648 & 1097:41893)
+          </h2>
+          <p class="text-sm text-ink-muted">Dropdown popover profil dan dialog modal ganti kata sandi</p>
+        </div>
+        <AppButton variant="primary" @click="showPasswordModal = true">
+          Buka Dialog Ganti Password
+        </AppButton>
+      </div>
+
+      <div class="flex items-center gap-12 rounded-xl bg-canvas p-6">
+        <div>
+          <p class="mb-2 text-xs font-semibold text-ink-muted">Square Avatar Trigger (Header):</p>
+          <ProfileMenu align="left" />
+        </div>
+        <div>
+          <p class="mb-2 text-xs font-semibold text-ink-muted">Round Avatar Trigger (Page Header):</p>
+          <ProfileMenu shape="round" align="left" />
+        </div>
+      </div>
+
+      <ChangePasswordModal
+        :open="showPasswordModal"
+        @close="showPasswordModal = false"
+      />
+    </section>
+
+    <!-- Tutorial & Troubleshoot Table Preview (Figma 1097:27375) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Tutorial & Troubleshoot Table (Figma 1097:27375)
+          </h2>
+          <p class="text-sm text-ink-muted">Tabel panduan tutorial dan troubleshoot vending machine</p>
+        </div>
+        <AppButton variant="primary" @click="showTutorialModal = true">
+          Buka Modal Tambah Panduan
+        </AppButton>
+      </div>
+
+      <TutorialTable
+        v-model:page="galleryTutorialPage"
+        v-model:per-page="galleryTutorialPerPage"
+        :items="sampleGuides"
+        :total-items="sampleGuides.length"
+        :is-admin="true"
+        @add="showTutorialModal = true"
+      />
+
+      <TutorialFormModal
+        :open="showTutorialModal"
+        @close="showTutorialModal = false"
+        @submit="showTutorialModal = false"
+      />
     </section>
   </main>
 </template>

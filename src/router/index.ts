@@ -49,6 +49,34 @@ export const router = createRouter({
       component: () => import('@/pages/RestockHistoryPage.vue'),
       props: (route) => ({ machine: route.params.machine }),
     },
+    // Billing and subscription expiration: preserves v1 path (/subscription-end) and supports /billing
+    {
+      path: '/subscription-end',
+      name: 'subscription-end',
+      component: () => import('@/pages/BillingPage.vue'),
+    },
+    {
+      path: '/billing',
+      name: 'billing',
+      redirect: '/subscription-end',
+    },
+    // Same path as v1's "Ubah Password" (pages/ganti-password/index.vue)
+    {
+      path: '/ganti-password',
+      name: 'change-password',
+      component: () => import('@/pages/ChangePasswordPage.vue'),
+    },
+    // Help & Support: preserves v1 paths (/tutorial and /faq)
+    {
+      path: '/tutorial',
+      name: 'tutorial',
+      component: () => import('@/pages/TutorialPage.vue'),
+    },
+    {
+      path: '/faq',
+      name: 'faq',
+      component: () => import('@/pages/FaqPage.vue'),
+    },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     // Same path as v1 so existing links keep working.
     {
