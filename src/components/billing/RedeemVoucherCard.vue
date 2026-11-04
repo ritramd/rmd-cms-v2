@@ -28,7 +28,7 @@ function handleSubmit() {
 </script>
 
 <template>
-  <div class="flex min-h-[580px] w-full items-center justify-center rounded-2xl border border-line-soft bg-surface p-8 shadow-card lg:min-h-[640px]">
+  <div class="flex min-h-[580px] w-full items-center justify-center rounded-2xl border border-line-soft bg-surface p-8 lg:min-h-[640px]">
     <div class="flex w-full max-w-[585px] flex-col items-center gap-4 text-center">
       <!-- Title & Subtitle -->
       <div class="flex flex-col items-center gap-2">

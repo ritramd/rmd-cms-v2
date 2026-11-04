@@ -61,7 +61,15 @@ export const navigation: NavEntry[] = [
   { label: 'Billing', icon: 'receipt-long', to: '/subscription-end' },
   { label: 'User Management', icon: 'manage-accounts', to: '/users' },
   'divider',
-  { label: 'Bantuan', icon: 'help', to: '/tutorial' },
+  // Help & Support: mirrors Figma (1097:27450) and v1 (rmd-cms/utils/menuItems.ts)
+  {
+    label: 'Bantuan',
+    icon: 'help',
+    children: [
+      { label: 'Tutorial & Troubleshoot', to: '/tutorial' },
+      { label: 'FAQ', to: '/faq' },
+    ],
+  },
 ]
 
 export function isNavGroup(entry: NavEntry): entry is NavGroup {

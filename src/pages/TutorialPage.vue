@@ -1,155 +1,263 @@
 <script setup lang="ts">
-// Figma & Legacy parity: rmd-cms/pages/tutorial/index.vue
-// Tata Cara Penggunaan Cloud Management System & Troubleshoot Vending Machine Smartven
-import { computed, onMounted, ref } from 'vue'
-import AppButton from '@/components/ui/AppButton.vue'
+// Figma: 10.1-D-Vending Sales (1097:27375) - Tutorial & Troubleshoot (Pure Figma)
+// Legacy parity: rmd-cms/pages/tutorial/index.vue
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import AppToast from '@/components/ui/AppToast.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import TutorialFormModal from '@/components/support/TutorialFormModal.vue'
+import TutorialTable from '@/components/support/TutorialTable.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import { ApiError } from '@/services/api'
-import { fetchTroubleshoots, fetchTutorials } from '@/services/support'
-import type { Troubleshoot, Tutorial } from '@/types/support'
+import { getSession } from '@/services/auth'
+import {
+  createTroubleshoot,
+  createTutorial,
+  deleteTroubleshoot,
+  deleteTutorial,
+  fetchGuides,
+  updateTroubleshoot,
+  updateTutorial,
+} from '@/services/support'
+import type { GuideItem, GuideType } from '@/types/support'
 
-interface GuideItem {
-  id: number
-  title: string
-  type: 'tutorial' | 'troubleshoot'
-  file: string
-}
+const route = useRoute()
+const router = useRouter()
 
-const search = ref('')
-const activeTab = ref<'all' | 'tutorial' | 'troubleshoot'>('all')
+// Session & permissions (v1 parity: role_id == 1 is Super Admin)
+const user = getSession()
+const isAdmin = computed(() => user?.role_id === 1)
 
+// Reactive filters & pagination
+const search = ref((route.query.search as string) || '')
+const page = ref(Number(route.query.page) || 1)
+const perPage = ref(Number(route.query.itemPerPage) || 10)
+
+// Data state
+const guides = ref<GuideItem[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
-const guides = ref<GuideItem[]>([])
+
+// Toast state
+const toastMessage = ref<string | null>(null)
+const toastVariant = ref<'success' | 'error'>('success')
+
+function showToast(message: string, variant: 'success' | 'error' = 'success') {
+  toastMessage.value = message
+  toastVariant.value = variant
+}
+
+// Modal state
+const formModalOpen = ref(false)
+const selectedGuide = ref<GuideItem | null>(null)
+const formBusy = ref(false)
+const formError = ref<string | null>(null)
+
+// Delete dialog state
+const deleteDialogOpen = ref(false)
+const guideToDelete = ref<GuideItem | null>(null)
+const deleteBusy = ref(false)
+const deleteError = ref<string | null>(null)
+
+// Race condition protection
+let requestId = 0
 
 async function loadData() {
+  const id = ++requestId
   loading.value = true
   error.value = null
   try {
-    const [tutorials, troubleshoots] = await Promise.all([
-      fetchTutorials().catch(() => [] as Tutorial[]),
-      fetchTroubleshoots().catch(() => [] as Troubleshoot[]),
-    ])
-
-    const list: GuideItem[] = [
-      ...tutorials.map((t) => ({ id: t.id, title: t.title, type: 'tutorial' as const, file: t.file })),
-      ...troubleshoots.map((ts) => ({ id: ts.id, title: ts.title, type: 'troubleshoot' as const, file: ts.file })),
-    ]
-
+    const list = await fetchGuides()
+    if (id !== requestId) return
     guides.value = list
   } catch (err) {
+    if (id !== requestId) return
     error.value = err instanceof ApiError || err instanceof Error ? err.message : 'Gagal memuat panduan.'
+    showToast(error.value, 'error')
   } finally {
-    loading.value = false
+    if (id === requestId) loading.value = false
   }
 }
 
+// Filtered items (all guides searchable via "Cari panduan apa")
 const filteredGuides = computed(() => {
   let list = guides.value
-  if (activeTab.value !== 'all') {
-    list = list.filter((g) => g.type === activeTab.value)
-  }
+
   if (search.value.trim()) {
-    const query = search.value.toLowerCase().trim()
-    list = list.filter((g) => g.title.toLowerCase().includes(query))
+    const q = search.value.toLowerCase().trim()
+    list = list.filter((g) => g.title.toLowerCase().includes(q))
   }
+
   return list
 })
+
+// Client paginated items
+const paginatedItems = computed(() => {
+  const start = (page.value - 1) * perPage.value
+  return filteredGuides.value.slice(start, start + perPage.value)
+})
+
+// Sync query string to URL
+watch([search, page, perPage], () => {
+  const query: Record<string, string> = {}
+  if (search.value.trim()) query.search = search.value.trim()
+  if (page.value > 1) query.page = String(page.value)
+  if (perPage.value !== 10) query.itemPerPage = String(perPage.value)
+
+  router.replace({ query })
+})
+
+// Reset page when search changes
+watch(search, () => {
+  page.value = 1
+})
+
+// Admin Modal Handlers
+function onOpenAddModal() {
+  selectedGuide.value = null
+  formError.value = null
+  formModalOpen.value = true
+}
+
+function onOpenEditModal(item: GuideItem) {
+  selectedGuide.value = item
+  formError.value = null
+  formModalOpen.value = true
+}
+
+async function handleFormSubmit(payload: {
+  id?: number
+  title: string
+  type: GuideType
+  status: 'publish' | 'draft'
+  file: File | null
+}) {
+  formBusy.value = true
+  formError.value = null
+
+  try {
+    const formData = new FormData()
+    formData.append('title', payload.title)
+    formData.append('status', payload.status)
+    if (payload.file) {
+      formData.append('file', payload.file)
+    }
+
+    if (payload.id) {
+      // Update
+      if (payload.type === 'tutorial') {
+        await updateTutorial(payload.id, formData)
+      } else {
+        await updateTroubleshoot(payload.id, formData)
+      }
+      showToast('Data panduan berhasil diperbarui!')
+    } else {
+      // Create
+      if (payload.type === 'tutorial') {
+        await createTutorial(formData)
+      } else {
+        await createTroubleshoot(formData)
+      }
+      showToast('Data panduan berhasil disimpan!')
+    }
+
+    formModalOpen.value = false
+    await loadData()
+  } catch (err) {
+    formError.value = err instanceof ApiError || err instanceof Error ? err.message : 'Gagal menyimpan data.'
+  } finally {
+    formBusy.value = false
+  }
+}
+
+function onConfirmDelete(item: GuideItem) {
+  guideToDelete.value = item
+  deleteError.value = null
+  deleteDialogOpen.value = true
+}
+
+async function executeDelete() {
+  if (!guideToDelete.value) return
+  deleteBusy.value = true
+  deleteError.value = null
+
+  try {
+    const item = guideToDelete.value
+    if (item.type === 'tutorial') {
+      await deleteTutorial(item.id)
+    } else {
+      await deleteTroubleshoot(item.id)
+    }
+
+    showToast('Data panduan berhasil dihapus!')
+    deleteDialogOpen.value = false
+    guideToDelete.value = null
+    await loadData()
+  } catch (err) {
+    deleteError.value = err instanceof ApiError || err instanceof Error ? err.message : 'Gagal menghapus data.'
+  } finally {
+    deleteBusy.value = false
+  }
+}
 
 onMounted(loadData)
 </script>
 
 <template>
-  <DashboardLayout
-    v-model:search="search"
-    title="Tutorial & Troubleshoot"
-    subtitle="Tata Cara Penggunaan Cloud Management System & Troubleshoot Vending Machine Smartven"
-  >
-    <div class="flex flex-col gap-6">
-      <!-- Filter controls -->
-      <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 shadow-card">
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="rounded-xl px-4 py-2 text-sm font-semibold transition cursor-pointer"
-            :class="activeTab === 'all' ? 'bg-primary text-white shadow-xs' : 'text-ink-muted hover:bg-surface-muted'"
-            @click="activeTab = 'all'"
-          >
-            Semua
-          </button>
-          <button
-            type="button"
-            class="rounded-xl px-4 py-2 text-sm font-semibold transition cursor-pointer"
-            :class="activeTab === 'tutorial' ? 'bg-primary text-white shadow-xs' : 'text-ink-muted hover:bg-surface-muted'"
-            @click="activeTab = 'tutorial'"
-          >
-            Tutorial
-          </button>
-          <button
-            type="button"
-            class="rounded-xl px-4 py-2 text-sm font-semibold transition cursor-pointer"
-            :class="activeTab === 'troubleshoot' ? 'bg-primary text-white shadow-xs' : 'text-ink-muted hover:bg-surface-muted'"
-            @click="activeTab = 'troubleshoot'"
-          >
-            Troubleshoot
-          </button>
-        </div>
-
-        <div class="text-xs text-ink-muted">
-          Menampilkan {{ filteredGuides.length }} panduan
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="loading" class="flex min-h-[300px] items-center justify-center rounded-2xl bg-surface p-8 shadow-card">
-        <p class="text-sm text-ink-muted">Memuat panduan bantuan…</p>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-2xl bg-surface p-8 shadow-card">
-        <p class="text-sm font-medium text-danger-strong">{{ error }}</p>
-        <AppButton variant="primary" @click="loadData">Coba Lagi</AppButton>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="filteredGuides.length === 0" class="flex min-h-[300px] flex-col items-center justify-center gap-2 rounded-2xl bg-surface p-8 text-center shadow-card">
-        <p class="text-base font-bold text-ink-strong">Belum Ada Panduan</p>
-        <p class="text-sm text-ink-muted">Tidak ada dokumen tutorial atau troubleshoot yang cocok dengan kriteria pencarian.</p>
-      </div>
-
-      <!-- Guides Grid -->
-      <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div
-          v-for="guide in filteredGuides"
-          :key="`${guide.type}-${guide.id}`"
-          class="flex flex-col justify-between rounded-2xl border border-line-soft bg-surface p-5 shadow-card transition hover:border-primary/40 hover:shadow-glow-success"
-        >
-          <div class="flex flex-col gap-2">
-            <span
-              class="self-start rounded-md px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider"
-              :class="guide.type === 'tutorial' ? 'bg-primary-soft text-primary' : 'bg-warning-soft text-warning-strong'"
-            >
-              {{ guide.type === 'tutorial' ? 'Tutorial' : 'Troubleshoot' }}
-            </span>
-            <h3 class="text-base font-bold text-ink-strong">{{ guide.title }}</h3>
-          </div>
-
-          <div class="mt-4 flex items-center justify-end border-t border-line-soft pt-3">
-            <a
-              v-if="guide.file"
-              :href="guide.file"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-xl bg-canvas px-3.5 py-2 text-xs font-bold text-ink-strong transition hover:bg-surface-muted"
-            >
-              <AppIcon name="download" class="size-4 shrink-0" />
-              <span>Buka Dokumen</span>
-            </a>
-            <span v-else class="text-xs text-ink-subtle">Tidak ada lampiran</span>
-          </div>
+  <DashboardLayout title="Tutorial & Troubleshoot">
+    <!-- Figma Subheader: Search Guide Input (1097:27493 - 480px width) -->
+    <div class="flex items-center">
+      <div class="relative w-full max-w-[480px]">
+        <input
+          v-model="search"
+          type="search"
+          placeholder="Cari panduan apa"
+          class="w-full rounded-lg border border-line bg-surface py-3 pr-4 pl-10 text-sm text-ink-strong shadow-xs placeholder:text-ink-subtle focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+        />
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          <AppIcon name="search" class="size-4.5 text-ink-placeholder" />
         </div>
       </div>
     </div>
+
+    <!-- Domain Table Component (Figma 1097:27510) -->
+    <TutorialTable
+      v-model:page="page"
+      v-model:per-page="perPage"
+      :items="paginatedItems"
+      :total-items="filteredGuides.length"
+      :loading="loading"
+      :is-admin="isAdmin"
+      @add="onOpenAddModal"
+      @edit="onOpenEditModal"
+      @delete="onConfirmDelete"
+    />
+
+    <!-- Admin Form Modal for Add/Edit -->
+    <TutorialFormModal
+      :open="formModalOpen"
+      :guide="selectedGuide"
+      :busy="formBusy"
+      :error="formError"
+      @close="formModalOpen = false"
+      @submit="handleFormSubmit"
+    />
+
+    <!-- Admin Confirm Delete Dialog -->
+    <ConfirmDialog
+      :open="deleteDialogOpen"
+      title="Hapus Panduan?"
+      :message="`Apakah kamu yakin ingin menghapus data panduan '${guideToDelete?.title}'?`"
+      confirm-label="Hapus"
+      cancel-label="Batal"
+      :busy="deleteBusy"
+      :error="deleteError"
+      @confirm="executeDelete"
+      @close="deleteDialogOpen = false"
+    />
+
+    <!-- User Feedback Toast -->
+    <AppToast v-model="toastMessage" :variant="toastVariant" />
   </DashboardLayout>
 </template>

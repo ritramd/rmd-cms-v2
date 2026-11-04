@@ -28,6 +28,9 @@ import RedeemVoucherCard from '@/components/billing/RedeemVoucherCard.vue'
 import PromotionPaymentModal from '@/components/billing/PromotionPaymentModal.vue'
 import ProfileMenu from '@/components/profile/ProfileMenu.vue'
 import ChangePasswordModal from '@/components/profile/ChangePasswordModal.vue'
+import TutorialTable from '@/components/support/TutorialTable.vue'
+import TutorialFormModal from '@/components/support/TutorialFormModal.vue'
+import type { GuideItem } from '@/types/support'
 import type { VoucherData } from '@/types/billing'
 import type { IconName } from '@/assets/icons'
 import type { CatalogProduct } from '@/types/product'
@@ -121,6 +124,15 @@ function resetColors() {
   accentColor.value = defaultColors.accent
   screenColor.value = defaultColors.screen
 }
+
+const sampleGuides: GuideItem[] = [
+  { id: 1, title: 'Membaca pengumuman di papan pengumuman', type: 'tutorial', status: 'publish', file: '230815103625_Membaca-Pengumuman di Announcement Board.pdf' },
+  { id: 2, title: 'Pengambilan Data Sales Vending Machine', type: 'tutorial', status: 'publish', file: '230815102939_Pengambilan-Data Sales Vending Machine.pdf' },
+  { id: 3, title: 'Error CMOS', type: 'troubleshoot', status: 'publish', file: '230815110533_TROUBLESHOOT-CMOS.pdf' },
+]
+const galleryTutorialPage = ref(1)
+const galleryTutorialPerPage = ref(10)
+const showTutorialModal = ref(false)
 </script>
 
 <template>
@@ -365,6 +377,36 @@ function resetColors() {
       <ChangePasswordModal
         :open="showPasswordModal"
         @close="showPasswordModal = false"
+      />
+    </section>
+
+    <!-- Tutorial & Troubleshoot Table Preview (Figma 1097:27375) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Tutorial & Troubleshoot Table (Figma 1097:27375)
+          </h2>
+          <p class="text-sm text-ink-muted">Tabel panduan tutorial dan troubleshoot vending machine</p>
+        </div>
+        <AppButton variant="primary" @click="showTutorialModal = true">
+          Buka Modal Tambah Panduan
+        </AppButton>
+      </div>
+
+      <TutorialTable
+        v-model:page="galleryTutorialPage"
+        v-model:per-page="galleryTutorialPerPage"
+        :items="sampleGuides"
+        :total-items="sampleGuides.length"
+        :is-admin="true"
+        @add="showTutorialModal = true"
+      />
+
+      <TutorialFormModal
+        :open="showTutorialModal"
+        @close="showTutorialModal = false"
+        @submit="showTutorialModal = false"
       />
     </section>
   </main>
