@@ -53,26 +53,34 @@ onMounted(() => sync(props.open))
 <template>
   <dialog
     ref="dialog"
-    class="m-auto max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl bg-transparent p-0 backdrop:bg-black/60"
+    class="m-auto max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-visible rounded-2xl bg-transparent p-0 backdrop:bg-black/60 focus:outline-none"
     :class="width"
     :aria-labelledby="titleId"
     @click="onDialogClick"
     @cancel.prevent="requestClose"
   >
-    <div ref="panel" class="flex flex-col gap-4 bg-surface p-5">
-      <div class="flex items-center gap-1">
-        <h2 :id="titleId" class="flex-1 text-2xl/[43px] font-bold text-ink-strong">{{ title }}</h2>
-        <button
-          type="button"
-          aria-label="Tutup"
-          class="shrink-0 rounded-lg hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
-          :disabled="busy"
-          @click="requestClose"
-        >
-          <img :src="closeIcon" alt="" />
-        </button>
+    <div class="relative flex max-h-[calc(100vh-2.5rem)] flex-col">
+      <slot name="outside" />
+      <div
+        ref="panel"
+        class="flex max-h-[calc(100vh-2.5rem)] flex-col rounded-2xl bg-surface shadow-2xl overflow-hidden"
+      >
+        <div class="flex shrink-0 items-center justify-between gap-2 border-b border-surface-muted/60 px-6 py-4">
+          <h2 :id="titleId" class="flex-1 text-2xl/[32px] font-bold text-ink-strong">{{ title }}</h2>
+          <button
+            type="button"
+            aria-label="Tutup"
+            class="shrink-0 rounded-lg p-1 hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 cursor-pointer transition-colors"
+            :disabled="busy"
+            @click="requestClose"
+          >
+            <img :src="closeIcon" alt="" />
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5">
+          <slot />
+        </div>
       </div>
-      <slot />
     </div>
   </dialog>
 </template>

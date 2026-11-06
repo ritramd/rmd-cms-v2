@@ -56,7 +56,14 @@ export const navigation: NavEntry[] = [
       { label: 'UI Material', to: '/ui-material' },
     ],
   },
-  { label: 'Atur Promo', icon: 'sell', to: '/flashsale' },
+  {
+    label: 'Atur Promo',
+    icon: 'sell',
+    children: [
+      { label: 'Flashsale', to: '/flashsale' },
+      { label: 'Almost Expired Item', to: '/almost-expired' },
+    ],
+  },
   { label: 'Log', icon: 'history', to: '/log-transaksi' },
   { label: 'Billing', icon: 'receipt-long', to: '/subscription-end' },
   { label: 'User Management', icon: 'manage-accounts', to: '/users' },

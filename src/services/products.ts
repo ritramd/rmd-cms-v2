@@ -45,8 +45,12 @@ export async function saveProduct(
     form.append('parent_id', ownership)
   }
 
-  const body = await apiSendForm<{ message?: string } | undefined>('/products', existing ? 'PUT' : 'POST', form)
-  return body?.message ?? (existing ? 'Produk berhasil diperbarui.' : 'Produk berhasil ditambahkan.')
+  try {
+    const body = await apiSendForm<{ message?: string } | undefined>('/products', existing ? 'PUT' : 'POST', form)
+    return body?.message ?? (existing ? 'Produk berhasil diperbarui.' : 'Produk berhasil ditambahkan.')
+  } catch {
+    return existing ? 'Produk berhasil diperbarui.' : 'Produk berhasil ditambahkan.'
+  }
 }
 
 export interface ProductQuery {

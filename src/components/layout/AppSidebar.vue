@@ -1,13 +1,15 @@
 <script setup lang="ts">
 // Figma: aside.w-20 (1097:42242)
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import SidebarNavGroup from '@/components/layout/SidebarNavGroup.vue'
 import SidebarNavItem from '@/components/ui/SidebarNavItem.vue'
 import SidebarSubItem from '@/components/ui/SidebarSubItem.vue'
+import { useOnboarding } from '@/composables/useOnboarding'
 import { isNavGroup, navigation, type NavGroup } from '@/config/navigation'
 
 const route = useRoute()
+const { currentStep } = useOnboarding()
 
 const navPaths = navigation.flatMap((entry) =>
   entry === 'divider' ? [] : isNavGroup(entry) ? entry.children.map((c) => c.to) : [entry.to],
@@ -30,6 +32,16 @@ const openGroups = ref<Record<string, boolean>>(
   Object.fromEntries(
     navigation.filter(isNavGroup).map((group: NavGroup) => [group.label, group.children.some((c) => isActive(c.to))]),
   ),
+)
+
+watch(
+  currentStep,
+  (step) => {
+    if (step === 'product_endorse_flashsale') {
+      openGroups.value['Atur Promo'] = true
+    }
+  },
+  { immediate: true },
 )
 </script>
 
