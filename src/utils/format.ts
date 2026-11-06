@@ -1,5 +1,27 @@
-export function formatRupiah(value: number): string {
-  return `Rp ${value.toLocaleString('id-ID')}`
+export function formatRupiah(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return 'Rp 0'
+  const num = typeof value === 'string' ? Number(value.replace(/[^0-9.-]+/g, '')) : Number(value)
+  if (isNaN(num)) return 'Rp 0'
+  return `Rp ${num.toLocaleString('id-ID')}`
+}
+
+/**
+ * Formats a number with thousand separators for input fields (e.g. 30000 -> "30.000").
+ * Returns empty string if value is 0, empty, null, or undefined.
+ */
+export function formatCurrencyInput(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return ''
+  const num = typeof value === 'string' ? Number(value.replace(/[^0-9]/g, '')) : Number(value)
+  if (isNaN(num) || num === 0) return ''
+  return num.toLocaleString('id-ID')
+}
+
+/**
+ * Parses a currency input string (e.g. "30.000" or "Rp 30.000") into a raw number (30000).
+ */
+export function parseCurrencyInput(value: string): number {
+  const digits = value.replace(/[^0-9]/g, '')
+  return digits ? parseInt(digits, 10) : 0
 }
 
 /**

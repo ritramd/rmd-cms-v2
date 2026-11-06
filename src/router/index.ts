@@ -66,6 +66,30 @@ export const router = createRouter({
       name: 'change-password',
       component: () => import('@/pages/ChangePasswordPage.vue'),
     },
+    // Promo & Flash sale: preserves v1 paths and matches Figma (1097:35691)
+    {
+      path: '/flashsale/:machine?',
+      name: 'flashsale',
+      component: () => import('@/pages/FlashsalePage.vue'),
+      props: true,
+    },
+    {
+      path: '/flashsale/kelola-:machine',
+      redirect: (to) => `/flashsale/${to.params.machine}`,
+    },
+    {
+      path: '/flashsale/tambah-:machine',
+      redirect: (to) => `/flashsale/${to.params.machine}?action=add`,
+    },
+    {
+      path: '/almost-expired',
+      name: 'almost-expired',
+      component: () => import('@/pages/AlmostExpiredPage.vue'),
+    },
+    {
+      path: '/flashsale/almost-expired',
+      redirect: '/almost-expired',
+    },
     // Help & Support: preserves v1 paths (/tutorial and /faq)
     {
       path: '/tutorial',

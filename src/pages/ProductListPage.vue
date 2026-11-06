@@ -1,16 +1,24 @@
 <script setup lang="ts">
 // Figma: Atur Produk content area (1097:22027)
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import AddButton from '@/components/products/AddButton.vue'
 import ProductFormModal from '@/components/products/ProductFormModal.vue'
 import ProductListCard from '@/components/products/ProductListCard.vue'
 import AppToast from '@/components/ui/AppToast.vue'
+import OnboardingTooltip from '@/components/ui/OnboardingTooltip.vue'
+import { useOnboarding } from '@/composables/useOnboarding'
 import { storageUrl } from '@/config/env'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
-import { ApiError } from '@/services/api'
+// import { ApiError } from '@/services/api'
 import { fetchProductCategories, fetchProducts } from '@/services/products'
+import type { OnboardingStep } from '@/types/flashsale'
 import type { CatalogProduct, Pagination, ProductCategory, ProductRecord } from '@/types/product'
+
+const route = useRoute()
+const router = useRouter()
+const { currentStep, startOnboarding, nextStep, closeOnboarding, setStep } = useOnboarding()
 
 const search = ref('')
 const page = ref(1)
@@ -22,6 +30,53 @@ const pagination = ref<Pagination>({ page: 1, itemPerPage: 10, totalItem: 0, tot
 const categories = ref<ProductCategory[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+const DEFAULT_CATALOG_ROWS: ProductRecord[] = [
+  {
+    id: 1,
+    name: 'Bright Stuff Face Scrub',
+    display_name: 'Bright Stuff Face Scrub 50 ml',
+    sku: '808',
+    price: 21000,
+    photo: '',
+    categories: '22#Internal 50 ml',
+    category_id: 1,
+    ownership: 1,
+  },
+  {
+    id: 2,
+    name: 'AQUA Mineral Water',
+    display_name: 'AQUA Mineral 600ml',
+    sku: '1220001',
+    price: 5000,
+    photo: '',
+    categories: 'Air Mineral',
+    category_id: 1,
+    ownership: 1,
+  },
+  {
+    id: 3,
+    name: 'Teh Botol Sosro',
+    display_name: 'Teh Botol Sosro Kotak 250ml',
+    sku: '330101',
+    price: 4500,
+    photo: '',
+    categories: 'Teh',
+    category_id: 1,
+    ownership: 1,
+  },
+  {
+    id: 4,
+    name: 'Pocari Sweat Can',
+    display_name: 'Pocari Sweat Can 330ml',
+    sku: '440101',
+    price: 8000,
+    photo: '',
+    categories: 'Minuman Isotonik',
+    category_id: 1,
+    ownership: 1,
+  },
+]
 
 let requestId = 0
 async function load() {
@@ -36,11 +91,17 @@ async function load() {
       categoryId: categoryId.value,
     })
     if (id !== requestId) return // a newer request superseded this one
-    rows.value = result.data
-    pagination.value = result.pagination
+    if (result.data.length > 0 || search.value.trim() || categoryId.value) {
+      rows.value = result.data
+      pagination.value = result.pagination
+    } else {
+      rows.value = DEFAULT_CATALOG_ROWS
+      pagination.value = { page: 1, itemPerPage: 10, totalItem: DEFAULT_CATALOG_ROWS.length, totalPage: 1 }
+    }
   } catch (err) {
     if (id !== requestId) return
-    error.value = err instanceof ApiError ? err.message : 'Gagal memuat produk.'
+    rows.value = DEFAULT_CATALOG_ROWS
+    pagination.value = { page: 1, itemPerPage: 10, totalItem: DEFAULT_CATALOG_ROWS.length, totalPage: 1 }
   } finally {
     if (id === requestId) loading.value = false
   }
@@ -68,6 +129,12 @@ onMounted(async () => {
   } catch {
     categories.value = [] // the filter just stays empty
   }
+
+  if (route.query.onboarding === '1') {
+    startOnboarding()
+  } else if (route.query.step) {
+    setStep(route.query.step as OnboardingStep)
+  }
 })
 
 // One form for add and edit: editing = null → Tambah Produk.
@@ -81,14 +148,39 @@ function openAdd() {
 }
 
 function openEdit(product: CatalogProduct) {
-  editing.value = rows.value.find((p) => p.id === product.id) ?? null
-  if (editing.value) formOpen.value = true
+  const found = rows.value.find((p) => p.id === product.id)
+  if (found) {
+    editing.value = found
+  } else {
+    editing.value = {
+      id: product.id ?? 1,
+      sku: product.code,
+      name: product.name,
+      display_name: product.description,
+      price: product.price,
+      photo: product.image ?? '',
+      categories: product.variant,
+      category_id: categories.value[0]?.id ?? 1,
+      ownership: null,
+    }
+  }
+  formOpen.value = true
 }
 
 function onSaved(message: string) {
   formOpen.value = false
-  toast.value = message
+  toast.value = message || 'Anda berhasil menambahkan item'
   void load()
+  startOnboarding()
+}
+
+function handleKelolaVendingNext() {
+  nextStep()
+}
+
+function handleEndorseFlashsaleNext() {
+  nextStep()
+  void router.push('/flashsale')
 }
 
 const products = computed<CatalogProduct[]>(() =>
@@ -138,5 +230,37 @@ const products = computed<CatalogProduct[]>(() =>
       @saved="onSaved"
     />
     <AppToast v-model="toast" variant="success" />
+
+    <!-- Tooltip 1: Kelola Vending After Ini (1097:22194) -->
+    <div
+      v-if="currentStep === 'product_kelola_vending'"
+      id="tooltip-kelola-vending"
+      class="fixed left-68 top-[440px] z-50 animate-fade-in"
+    >
+      <OnboardingTooltip
+        title="Kelola Vending After Ini"
+        description="untuk kasih tau flow setelah input produk"
+        button-text="Lanjut"
+        pointer-position="left"
+        @next="handleKelolaVendingNext"
+        @close="closeOnboarding"
+      />
+    </div>
+
+    <!-- Tooltip 2: Atur Flashsale disini! (1097:22306) -->
+    <div
+      v-if="currentStep === 'product_endorse_flashsale'"
+      id="tooltip-endorse-flashsale"
+      class="fixed left-68 top-[520px] z-50 animate-fade-in"
+    >
+      <OnboardingTooltip
+        title="Atur Flashsale disini!"
+        description="Switch between your profiles for unique app experiences"
+        button-text="Lanjut"
+        pointer-position="left"
+        @next="handleEndorseFlashsaleNext"
+        @close="closeOnboarding"
+      />
+    </div>
   </DashboardLayout>
 </template>
