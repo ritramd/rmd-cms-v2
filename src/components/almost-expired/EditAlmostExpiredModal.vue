@@ -93,15 +93,15 @@ function handleClose() {
         >
           <!-- Left: Pilih Item selector display -->
           <div class="flex flex-col gap-1.5">
-            <span class="text-xs font-bold uppercase tracking-[1.2px] text-[#9ca3af]">
+            <span class="block text-xs font-bold uppercase tracking-[1px] text-[#9ca3af] leading-5">
               PILIH ITEM
             </span>
             <div
-              class="flex items-center justify-between rounded-lg border border-[#e3e8ee] bg-surface p-2 shadow-2xs"
+              class="flex h-[48px] items-center justify-between rounded-lg border border-[#e3e8ee] bg-surface px-3 shadow-2xs transition"
             >
               <div class="flex items-center gap-3 min-w-0">
                 <div
-                  class="size-[42px] shrink-0 overflow-hidden rounded-lg border border-line-soft bg-surface-muted p-1"
+                  class="size-[34px] shrink-0 overflow-hidden rounded-md border border-line-soft bg-surface-muted p-0.5"
                 >
                   <img
                     :src="state.item.photo || defaultProductImg"
@@ -109,16 +109,16 @@ function handleClose() {
                     class="size-full object-contain pointer-events-none"
                   />
                 </div>
-                <div class="min-w-0">
-                  <p class="truncate text-sm font-normal text-ink-strong">
+                <div class="min-w-0 flex flex-col justify-center">
+                  <p class="truncate text-sm font-normal text-ink-strong leading-tight">
                     {{ state.item.internalName || state.item.name }}
                   </p>
-                  <p class="truncate text-xs text-ink-muted">
+                  <p class="truncate text-xs text-ink-muted leading-tight mt-0.5">
                     {{ state.item.name }}
                   </p>
                 </div>
               </div>
-              <div class="shrink-0 text-ink-muted px-2">
+              <div class="shrink-0 text-ink-muted pl-2">
                 <AppIcon name="line-chevron-down" class="size-4" />
               </div>
             </div>
@@ -126,12 +126,17 @@ function handleClose() {
 
           <!-- Right: Price input -->
           <div class="flex flex-col gap-1.5">
-            <label :for="'price-input-' + state.item.id" class="text-xs font-medium uppercase tracking-[0.3px] text-[#64748b]">
+            <label
+              :for="'price-input-' + state.item.id"
+              class="block text-xs font-bold uppercase tracking-[1px] text-[#9ca3af] leading-5"
+            >
               PRICE
             </label>
-            <div class="relative flex items-center rounded-lg shadow-2xs">
+            <div
+              class="flex h-[48px] w-full items-stretch rounded-lg border border-[#e2e8f0] bg-surface shadow-2xs transition focus-within:border-primary focus-within:ring-1 focus-within:ring-primary overflow-hidden"
+            >
               <span
-                class="inline-flex h-[42px] w-12 items-center justify-center rounded-l-lg border border-r-0 border-[#e2e8f0] bg-[#cbd5e1] text-sm font-normal text-[#334155]"
+                class="flex h-full w-10 shrink-0 items-center justify-center border-r border-[#e2e8f0] bg-[#cbd5e1] text-sm font-normal text-[#334155]"
               >
                 Rp
               </span>
@@ -140,7 +145,7 @@ function handleClose() {
                 :value="state.priceInput"
                 type="text"
                 placeholder="0"
-                class="h-[42px] w-full rounded-r-lg border border-[#e2e8f0] bg-surface px-3 text-sm text-ink-strong outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
+                class="h-full w-full bg-transparent px-3 text-sm text-ink-strong outline-none placeholder:text-ink-subtle"
                 @input="onPriceChange(state, $event)"
               />
             </div>
