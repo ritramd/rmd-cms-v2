@@ -66,7 +66,13 @@ export const navigation: NavEntry[] = [
   },
   { label: 'Log', icon: 'history', to: '/log-transaksi' },
   { label: 'Billing', icon: 'receipt-long', to: '/subscription-end' },
-  { label: 'User Management', icon: 'manage-accounts', to: '/users' },
+  {
+    label: 'User Management',
+    icon: 'manage-accounts',
+    children: [
+      { label: 'Manage User', to: '/users' },
+    ],
+  },
   'divider',
   // Help & Support: mirrors Figma (1097:27450) and v1 (rmd-cms/utils/menuItems.ts)
   {

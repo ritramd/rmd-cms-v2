@@ -87,8 +87,21 @@ export const router = createRouter({
       component: () => import('@/pages/AlmostExpiredPage.vue'),
     },
     {
+      path: '/almost-expired/:machine',
+      name: 'almost-expired-detail',
+      component: () => import('@/pages/AlmostExpiredDetailPage.vue'),
+    },
+    {
       path: '/flashsale/almost-expired',
       redirect: '/almost-expired',
+    },
+    {
+      path: '/diskon-kedaluarsa',
+      redirect: '/almost-expired',
+    },
+    {
+      path: '/diskon-kedaluarsa/:machine',
+      redirect: (to) => `/almost-expired/${to.params.machine}`,
     },
     // Help & Support: preserves v1 paths (/tutorial and /faq)
     {
@@ -100,6 +113,16 @@ export const router = createRouter({
       path: '/faq',
       name: 'faq',
       component: () => import('@/pages/FaqPage.vue'),
+    },
+    // User Management: preserves legacy path (/users) and matches Figma (1097:28128)
+    {
+      path: '/users',
+      name: 'users',
+      component: () => import('@/pages/UserManagementPage.vue'),
+    },
+    {
+      path: '/user-management',
+      redirect: '/users',
     },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     // Same path as v1 so existing links keep working.

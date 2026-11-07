@@ -30,6 +30,17 @@ import ProfileMenu from '@/components/profile/ProfileMenu.vue'
 import ChangePasswordModal from '@/components/profile/ChangePasswordModal.vue'
 import TutorialTable from '@/components/support/TutorialTable.vue'
 import TutorialFormModal from '@/components/support/TutorialFormModal.vue'
+import AppSidebar from '@/components/layout/AppSidebar.vue'
+import UserTable from '@/components/users/UserTable.vue'
+import AddUserModal from '@/components/users/AddUserModal.vue'
+import EditUserModal from '@/components/users/EditUserModal.vue'
+import DeleteUserModal from '@/components/users/DeleteUserModal.vue'
+import AlmostExpiredMachineTable from '@/components/almost-expired/AlmostExpiredMachineTable.vue'
+import AlmostExpiredItemTable from '@/components/almost-expired/AlmostExpiredItemTable.vue'
+import EditAlmostExpiredModal from '@/components/almost-expired/EditAlmostExpiredModal.vue'
+import AppBreadcrumb from '@/components/ui/AppBreadcrumb.vue'
+import type { AlmostExpiredMachine, AlmostExpiredItem } from '@/types/almostExpired'
+import type { UserAndVending, YourVending } from '@/types/user'
 import type { GuideItem } from '@/types/support'
 import type { VoucherData } from '@/types/billing'
 import type { IconName } from '@/assets/icons'
@@ -133,6 +144,89 @@ const sampleGuides: GuideItem[] = [
 const galleryTutorialPage = ref(1)
 const galleryTutorialPerPage = ref(10)
 const showTutorialModal = ref(false)
+
+// Sample users from Figma 1097:28128
+const sampleUsers: UserAndVending[] = [
+  {
+    userId: 101,
+    roleId: 60,
+    userName: 'Axel Sungkar',
+    email: 'a.xels@gmail.com',
+    roleName: 'Pro',
+    totalCount: 9,
+    vendingMachineNames: [
+      'VM - Arrabox TMII 001',
+      'VM - Arrabox TMII 002',
+      'VM - Grand Indonesia Level 3',
+      'VM - Pondok Indah Mall 2',
+      'VM - Senayan City Ground',
+      'VM - Kota Kasablanka UG',
+      'VM - Central Park Mall',
+      'VM - Mall Kelapa Gading 3',
+      'VM - Gandaria City 1',
+    ],
+    lastUpdate: '2026-04-08 22:10',
+    parentId: 1,
+  },
+  {
+    userId: 102,
+    roleId: 59,
+    userName: 'Lina Prasetyo',
+    email: 'lina.pras@mail.co',
+    roleName: 'Starter',
+    totalCount: 3,
+    vendingMachineNames: ['VM - Arrabox TMII 001', 'VM - Arrabox TMII 002', 'VM - Central Park Mall'],
+    lastUpdate: '2026-04-09 08:45',
+    parentId: 1,
+  },
+]
+const sampleVendings: YourVending[] = [
+  { vendingId: 1, name: 'VM - Arrabox TMII 001' },
+  { vendingId: 2, name: 'VM - Arrabox TMII 002' },
+  { vendingId: 3, name: 'VM - Grand Indonesia Level 3' },
+  { vendingId: 4, name: 'VM - Pondok Indah Mall 2' },
+  { vendingId: 5, name: 'VM - Senayan City Ground' },
+]
+
+const galleryUserPage = ref(1)
+const galleryUserPageSize = ref(10)
+const showAddUserModal = ref(false)
+const showEditUserModal = ref(false)
+const showDeleteUserModal = ref(false)
+const gallerySelectedUser = ref<UserAndVending | null>(null)
+
+const sampleAlmostExpiredMachines: AlmostExpiredMachine[] = [
+  { id: 1, code: 'VMENIG010', location: 'VM - CIMB EVENT XTRA XPO MEDAN 001', totalItem: 20 },
+  { id: 2, code: 'VMENIG011', location: 'VM - CIMB EVENT XTRA XPO MEDAN 002', totalItem: 12 },
+  { id: 3, code: 'VMENIG012', location: 'VM - CIMB NIAGA Panakukkang Makassar', totalItem: 20 },
+]
+
+const sampleAlmostExpiredItems: AlmostExpiredItem[] = [
+  {
+    id: 1,
+    productId: 101,
+    name: 'VM - CIMB EVENT XTRA XPO MEDAN 001',
+    internalName: 'Bright Stuff Face Scrub',
+    photo: faceScrub,
+    price: 200000,
+    expiredDate: 'Rabu, 8 April 2026',
+    status: true,
+  },
+  {
+    id: 2,
+    productId: 102,
+    name: 'Promo RAMADHAN Cashback 20%',
+    internalName: 'Bright Stuff Face Scrub',
+    photo: faceScrub,
+    price: 150000,
+    expiredDate: 'Rabu, 8 April 2026',
+    status: true,
+  },
+]
+
+const showGalleryEditAlmostExpiredModal = ref(false)
+const gallerySelectedAlmostExpiredIds = ref<number[]>([1, 2])
+const galleryItemsToEdit = ref<AlmostExpiredItem[]>([sampleAlmostExpiredItems[0]])
 </script>
 
 <template>
@@ -407,6 +501,116 @@ const showTutorialModal = ref(false)
         :open="showTutorialModal"
         @close="showTutorialModal = false"
         @submit="showTutorialModal = false"
+      />
+    </section>
+
+    <!-- User Management Table & Modals Preview (Figma 1097:28128, 1097:28419, 1097:28899, 1097:29379) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            User Management (Figma 1097:28128, 1097:28419, 1097:28899, 1097:29379)
+          </h2>
+          <p class="text-sm text-ink-muted">Tabel pengguna, tambah user modal, ubah user modal, dan konfirmasi hapus</p>
+        </div>
+        <div class="flex gap-2">
+          <AppButton variant="primary" @click="showAddUserModal = true">
+            Buka Tambah User Modal
+          </AppButton>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <div class="w-64 h-[780px] shrink-0 rounded-2xl border border-line-soft overflow-hidden shadow-card">
+          <AppSidebar />
+        </div>
+        <div class="flex-1 min-w-0 w-full overflow-hidden">
+          <UserTable
+            :users="sampleUsers"
+            :page="galleryUserPage"
+            :page-size="galleryUserPageSize"
+            @edit="(u) => { gallerySelectedUser = u; showEditUserModal = true }"
+            @delete="(u) => { gallerySelectedUser = u; showDeleteUserModal = true }"
+            @show-vendings="() => {}"
+            @toggle-sort="() => {}"
+          />
+        </div>
+      </div>
+
+      <AddUserModal
+        :open="showAddUserModal"
+        :your-vendings="sampleVendings"
+        @close="showAddUserModal = false"
+        @submit="() => showAddUserModal = false"
+      />
+
+      <EditUserModal
+        :open="showEditUserModal"
+        :user="gallerySelectedUser"
+        :your-vendings="sampleVendings"
+        @close="showEditUserModal = false"
+        @submit="() => showEditUserModal = false"
+      />
+
+      <DeleteUserModal
+        :open="showDeleteUserModal"
+        :user="gallerySelectedUser"
+        @close="showDeleteUserModal = false"
+        @confirm="() => showDeleteUserModal = false"
+      />
+    </section>
+
+    <!-- Almost Expired Items Preview (Figma 1097:27019, 1097:30280, 1097:30646, 1097:31104) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Almost Expired Item (Figma 1097:27019, 1097:30280, 1097:30646, 1097:31104)
+          </h2>
+          <p class="text-sm text-ink-muted">Tabel vending machine kedaluwarsa, tabel detail produk, breadcrumb, dan modal ubah harga (single & batch)</p>
+        </div>
+        <div class="flex gap-2">
+          <AppButton
+            variant="primary"
+            @click="galleryItemsToEdit = [...sampleAlmostExpiredItems]; showGalleryEditAlmostExpiredModal = true"
+          >
+            Buka Ubah Harga Modal (Batch)
+          </AppButton>
+        </div>
+      </div>
+
+      <!-- Breadcrumb preview -->
+      <div class="p-3 bg-surface-muted/50 rounded-xl">
+        <AppBreadcrumb
+          :items="[
+            { label: 'Almost Expired Item', to: '/almost-expired' },
+            { label: 'VMENIG010' }
+          ]"
+        />
+      </div>
+
+      <!-- Main list table preview -->
+      <div class="space-y-2">
+        <h3 class="text-sm font-semibold text-ink-strong">1. Tabel Daftar Vending Machine (1097:27019)</h3>
+        <AlmostExpiredMachineTable :machines="sampleAlmostExpiredMachines" />
+      </div>
+
+      <!-- Detail table preview -->
+      <div class="space-y-2">
+        <h3 class="text-sm font-semibold text-ink-strong">2. Tabel Detail Produk Kedaluwarsa (1097:30280)</h3>
+        <AlmostExpiredItemTable
+          v-model:selected-ids="gallerySelectedAlmostExpiredIds"
+          :items="sampleAlmostExpiredItems"
+          @edit="(item) => { galleryItemsToEdit = [item]; showGalleryEditAlmostExpiredModal = true }"
+        />
+      </div>
+
+      <!-- Edit Modal preview -->
+      <EditAlmostExpiredModal
+        :open="showGalleryEditAlmostExpiredModal"
+        :items="galleryItemsToEdit"
+        @close="showGalleryEditAlmostExpiredModal = false"
+        @save="() => showGalleryEditAlmostExpiredModal = false"
       />
     </section>
   </main>
