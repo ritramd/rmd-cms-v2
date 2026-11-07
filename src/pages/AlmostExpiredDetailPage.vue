@@ -81,10 +81,9 @@ async function loadData() {
     totalItems.value = result.pagination.totalItem
     totalPages.value = result.pagination.totalPage
 
-    // Preselect items to match Figma design (or preserve existing valid selections)
-    if (selectedIds.value.length === 0 && result.data.length > 0) {
-      selectedIds.value = result.data.map((i) => i.id)
-    }
+    // Keep only selections that still exist in fetched items
+    const validIds = new Set(result.data.map((i) => i.id))
+    selectedIds.value = selectedIds.value.filter((id) => validIds.has(id))
   } catch {
     if (currentReq !== requestId) return
     items.value = []

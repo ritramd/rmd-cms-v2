@@ -114,7 +114,7 @@ function getPhoto(photo?: string): string {
               v-for="col in columns"
               :key="col.label"
               scope="col"
-              class="px-8 pt-5 pb-5 text-[11px] font-normal tracking-[1.1px] text-ink-subtle uppercase"
+              class="px-8 pt-5 pb-5 text-[11px] font-normal tracking-[1.1px] text-ink-subtle uppercase whitespace-nowrap"
               :class="col.class"
             >
               {{ col.label }}
