@@ -234,6 +234,7 @@ const labelClass = fieldLabelClass
             tabindex="-1"
             aria-label="Upload foto produk"
             @change="pickFile(($event.target as HTMLInputElement).files?.[0]); ($event.target as HTMLInputElement).value = ''"
+            @cancel.stop.prevent
           />
         </div>
       </div>

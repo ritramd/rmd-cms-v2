@@ -33,6 +33,18 @@ function onDialogClick(event: MouseEvent) {
   if (event.target === dialog.value) requestClose()
 }
 
+function onDialogCancel(event: Event) {
+  // If the cancel event originated from a child element (e.g. an <input type="file"> when canceling the native OS file picker),
+  // stop propagation and prevent default so the modal dialog remains open.
+  if (event.target !== dialog.value) {
+    event.stopPropagation()
+    event.preventDefault()
+    return
+  }
+  event.preventDefault()
+  requestClose()
+}
+
 async function sync(open: boolean) {
   if (open && !dialog.value?.open) {
     dialog.value?.showModal()
@@ -47,7 +59,20 @@ async function sync(open: boolean) {
 }
 
 watch(() => props.open, sync)
-onMounted(() => sync(props.open))
+onMounted(() => {
+  // Capture-phase listener to catch bubbling cancel events from file inputs before they can close the dialog
+  dialog.value?.addEventListener(
+    'cancel',
+    (event) => {
+      if (event.target !== dialog.value) {
+        event.stopPropagation()
+        event.preventDefault()
+      }
+    },
+    true,
+  )
+  void sync(props.open)
+})
 </script>
 
 <template>
@@ -57,13 +82,14 @@ onMounted(() => sync(props.open))
     :class="width"
     :aria-labelledby="titleId"
     @click="onDialogClick"
-    @cancel.prevent="requestClose"
+    @cancel="onDialogCancel"
   >
     <div class="relative flex max-h-[calc(100vh-2.5rem)] flex-col">
       <slot name="outside" />
       <div
         ref="panel"
         class="flex max-h-[calc(100vh-2.5rem)] flex-col rounded-2xl bg-surface shadow-2xl overflow-hidden"
+        @cancel.stop
       >
         <div class="flex shrink-0 items-center justify-between gap-2 border-b border-surface-muted/60 px-6 py-4">
           <h2 :id="titleId" class="flex-1 text-2xl/[32px] font-bold text-ink-strong">{{ title }}</h2>

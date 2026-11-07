@@ -159,6 +159,7 @@ function onSubmit() {
           :disabled="busy"
           class="block w-full text-xs text-ink-muted file:mr-4 file:rounded-lg file:border-0 file:bg-surface-muted file:px-4 file:py-2.5 file:text-xs file:font-semibold file:text-ink-strong hover:file:bg-line-faint"
           @change="onFileChange"
+          @cancel.stop.prevent
         />
         <p class="text-[11px] text-ink-muted">Maksimal 5MB, format dokumen PDF.</p>
         <p v-if="fileError" class="text-xs font-medium text-danger-strong">{{ fileError }}</p>
