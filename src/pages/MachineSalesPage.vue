@@ -171,8 +171,10 @@ const emptyText = computed(() =>
         <!-- One row on desktop (fields shrink to fit), wrapping on smaller screens. -->
         <div class="flex flex-wrap items-end gap-6 lg:flex-nowrap">
           <ProductSearchField v-model="productIds" :products="products" />
-          <DateField v-model="startDate" label="Start Date" :max="endDate || undefined" />
-          <DateField v-model="endDate" label="End Date" :min="startDate || undefined" />
+          <div class="flex flex-wrap gap-6 sm:flex-nowrap">
+            <DateField v-model="startDate" label="Start Date" :max="endDate || undefined" />
+            <DateField v-model="endDate" label="End Date" :min="startDate || undefined" />
+          </div>
           <div class="ml-auto flex shrink-0 items-center gap-4">
             <AppButton v-if="hasFilters" icon="line-rotate-ccw" @click="resetFilters">Reset</AppButton>
             <button

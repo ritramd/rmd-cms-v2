@@ -11,6 +11,7 @@ export interface NavLink {
 export interface NavGroup {
   label: string
   icon: IconName
+  to?: string
   children: { label: string; to: string }[]
 }
 
@@ -18,12 +19,13 @@ export type NavEntry = NavLink | NavGroup | 'divider'
 
 export const navigation: NavEntry[] = [
   { label: 'Dashboard', icon: 'dashboard', to: '/' },
-  // Figma: Produk group with "Atur Produk" (1097:21992). v1's "Manage Produk" lives at /product.
+  // Figma: Produk group (1097:21992). v1's "Manage Produk" lives at /product (page title: "Daftar Produk").
   {
     label: 'Produk',
     icon: 'inventory',
+    to: '/product',
     children: [
-      { label: 'Atur Produk', to: '/product' },
+      { label: 'Daftar Produk', to: '/product' },
       // Not in Figma yet; same path as v1's "Kategori Produk".
       { label: 'Kategori Produk', to: '/product/categories' },
     ],
@@ -32,6 +34,7 @@ export const navigation: NavEntry[] = [
   {
     label: 'Penjualan',
     icon: 'receipt',
+    to: '/vending-sales',
     children: [
       { label: 'Vending Sales', to: '/vending-sales' },
       { label: 'Vending Sales Digital', to: '/sales-digital' },
@@ -42,6 +45,7 @@ export const navigation: NavEntry[] = [
   {
     label: 'Stok',
     icon: 'assignment',
+    to: '/stok-vending',
     children: [
       { label: 'Stok Vending', to: '/stok-vending' },
       { label: 'Riwayat Stok Ulang', to: '/histori-stok-ulang' },
@@ -50,6 +54,7 @@ export const navigation: NavEntry[] = [
   {
     label: 'Kelola Vending',
     icon: 'storefront',
+    to: '/kelola-vending',
     children: [
       { label: 'Live Preview', to: '/live-preview' },
       { label: 'Daftar vending', to: '/kelola-vending' },
@@ -59,6 +64,7 @@ export const navigation: NavEntry[] = [
   {
     label: 'Atur Promo',
     icon: 'sell',
+    to: '/flashsale',
     children: [
       { label: 'Flashsale', to: '/flashsale' },
       { label: 'Almost Expired Item', to: '/almost-expired' },
@@ -69,6 +75,7 @@ export const navigation: NavEntry[] = [
   {
     label: 'User Management',
     icon: 'manage-accounts',
+    to: '/users',
     children: [
       { label: 'Manage User', to: '/users' },
     ],
@@ -78,6 +85,7 @@ export const navigation: NavEntry[] = [
   {
     label: 'Bantuan',
     icon: 'help',
+    to: '/tutorial',
     children: [
       { label: 'Tutorial & Troubleshoot', to: '/tutorial' },
       { label: 'FAQ', to: '/faq' },

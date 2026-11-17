@@ -116,16 +116,22 @@ function handleSubmit() {
         <label for="edit-user-role" class="block font-inter text-xs font-bold uppercase tracking-wider text-ink-placeholder">
           Role
         </label>
-        <select
-          id="edit-user-role"
-          v-model="selectedRole"
-          class="w-full cursor-pointer rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm text-ink-strong shadow-xs transition-colors focus:border-brand focus:outline-none"
-          :disabled="busy"
-        >
-          <option v-for="r in roles" :key="r.value" :value="r.value">
-            {{ r.label }}
-          </option>
-        </select>
+        <div class="relative">
+          <select
+            id="edit-user-role"
+            v-model="selectedRole"
+            class="w-full appearance-none cursor-pointer rounded-lg border border-line bg-surface pl-3.5 pr-10 py-2.5 text-sm text-ink-strong shadow-xs transition-colors focus:border-brand focus:outline-none"
+            :disabled="busy"
+          >
+            <option v-for="r in roles" :key="r.value" :value="r.value">
+              {{ r.label }}
+            </option>
+          </select>
+          <AppIcon
+            name="line-select-chevron"
+            class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2"
+          />
+        </div>
       </div>
 
       <!-- Tambah / Atur Mesin -->

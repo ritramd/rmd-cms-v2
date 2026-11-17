@@ -65,6 +65,7 @@ watch(
           v-model:open="openGroups[entry.label]"
           :label="entry.label"
           :icon="entry.icon"
+          :to="entry.to"
         >
           <SidebarSubItem
             v-for="child in entry.children"

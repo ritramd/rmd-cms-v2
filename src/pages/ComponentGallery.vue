@@ -263,6 +263,7 @@ const galleryItemsToEdit = ref<AlmostExpiredItem[]>([sampleAlmostExpiredItems[0]
           <h2 class="mb-4 text-xs font-bold tracking-wide text-ink-subtle uppercase">AppButton · IconButton · NotificationButton · TextLink</h2>
           <div class="flex flex-wrap items-center gap-4">
             <AppButton icon="filter">Filter</AppButton>
+            <AppButton variant="primary" icon="filter">Filter (Aktif)</AppButton>
             <AppButton icon="download">Export</AppButton>
             <AppButton variant="primary" icon="add">Tambah Vending</AppButton>
             <AppButton variant="primary" disabled>Disabled</AppButton>

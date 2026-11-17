@@ -1,9 +1,10 @@
 <script setup lang="ts">
 // Figma: Component 7 (11:1304)
+import { computed } from 'vue'
 import type { IconName } from '@/assets/icons'
 import AppIcon from './AppIcon.vue'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     /** "danger" isn't in Figma; same shape as primary for destructive confirmations. */
     variant?: 'primary' | 'secondary' | 'danger'
@@ -13,6 +14,17 @@ withDefaults(
   }>(),
   { variant: 'secondary', type: 'button' },
 )
+
+const resolvedIcon = computed<IconName | undefined>(() => {
+  if (!props.icon) return undefined
+  if (props.variant === 'primary' || props.variant === 'danger') {
+    if (props.icon === 'filter') return 'filter-active'
+    if (props.icon === 'line-filter') return 'line-filter-active'
+  }
+  return props.icon
+})
+
+const isWhiteIcon = computed(() => props.variant === 'primary' || props.variant === 'danger')
 </script>
 
 <template>
@@ -28,7 +40,12 @@ withDefaults(
           : 'border border-line bg-surface py-2.5 font-medium text-ink shadow-hairline enabled:hover:bg-surface-muted'
     "
   >
-    <AppIcon v-if="icon" :name="icon" class="my-[5px] shrink-0" />
+    <AppIcon
+      v-if="resolvedIcon"
+      :name="resolvedIcon"
+      class="my-[5px] shrink-0"
+      :class="isWhiteIcon ? '[filter:brightness(0)_invert(1)]' : ''"
+    />
     <slot />
   </button>
 </template>

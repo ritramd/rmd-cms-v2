@@ -178,16 +178,22 @@ watch(
         <label for="new-user-role" class="block font-inter text-xs font-bold uppercase tracking-wider text-ink-placeholder">
           Role
         </label>
-        <select
-          id="new-user-role"
-          v-model="form.newPackage"
-          class="w-full cursor-pointer rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm text-ink-strong shadow-xs transition-colors focus:border-brand focus:outline-none"
-          :disabled="busy"
-        >
-          <option v-for="r in roles" :key="r.value" :value="r.value">
-            {{ r.label }}
-          </option>
-        </select>
+        <div class="relative">
+          <select
+            id="new-user-role"
+            v-model="form.newPackage"
+            class="w-full appearance-none cursor-pointer rounded-lg border border-line bg-surface pl-3.5 pr-10 py-2.5 text-sm text-ink-strong shadow-xs transition-colors focus:border-brand focus:outline-none"
+            :disabled="busy"
+          >
+            <option v-for="r in roles" :key="r.value" :value="r.value">
+              {{ r.label }}
+            </option>
+          </select>
+          <AppIcon
+            name="line-select-chevron"
+            class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2"
+          />
+        </div>
       </div>
 
       <!-- Dev/Ops: Parent User selector -->
@@ -195,17 +201,23 @@ watch(
         <label for="new-user-parent" class="block font-inter text-xs font-bold uppercase tracking-wider text-ink-placeholder">
           Parent User (Dev / Ops)
         </label>
-        <select
-          id="new-user-parent"
-          v-model="form.crossUser"
-          class="w-full cursor-pointer rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm text-ink-strong shadow-xs transition-colors focus:border-brand focus:outline-none"
-          :disabled="busy"
-        >
-          <option value="">Pilih Parent User (Default: Akun Saat Ini)</option>
-          <option v-for="p in listParent" :key="p.id" :value="p.id">
-            {{ p.name }}
-          </option>
-        </select>
+        <div class="relative">
+          <select
+            id="new-user-parent"
+            v-model="form.crossUser"
+            class="w-full appearance-none cursor-pointer rounded-lg border border-line bg-surface pl-3.5 pr-10 py-2.5 text-sm text-ink-strong shadow-xs transition-colors focus:border-brand focus:outline-none"
+            :disabled="busy"
+          >
+            <option value="">Pilih Parent User (Default: Akun Saat Ini)</option>
+            <option v-for="p in listParent" :key="p.id" :value="p.id">
+              {{ p.name }}
+            </option>
+          </select>
+          <AppIcon
+            name="line-select-chevron"
+            class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2"
+          />
+        </div>
       </div>
 
       <!-- Tambah Mesin -->

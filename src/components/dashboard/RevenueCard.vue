@@ -32,7 +32,7 @@ const growthLabel = computed(() =>
 
 <template>
   <section
-    class="relative isolate flex flex-col gap-3.5 overflow-clip rounded-[32px] bg-linear-[163.73deg] from-primary to-revenue-end p-8 text-white shadow-primary"
+    class="relative isolate flex h-[230px] flex-col justify-between overflow-clip rounded-[32px] bg-linear-[163.73deg] from-primary to-revenue-end p-8 text-white shadow-primary"
     :aria-busy="loading"
   >
     <div class="absolute -top-12 -right-12 -z-10 size-64 rounded-full bg-white opacity-5 blur-[32px]" aria-hidden="true" />
@@ -41,7 +41,7 @@ const growthLabel = computed(() =>
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 flex-col gap-2">
         <h2 class="flex items-center gap-2 text-base font-medium text-success-soft">
-          <span class="rounded-md bg-white/20 px-1 py-2"><AppIcon name="wallet" /></span>
+          <span class="rounded-md bg-white/20 px-1 py-1.5"><AppIcon name="wallet" /></span>
           Total Pendapatan
         </h2>
         <div v-if="loading" class="h-12 w-80 max-w-full animate-pulse rounded-xl bg-white/20" />
@@ -55,7 +55,7 @@ const growthLabel = computed(() =>
             Coba lagi
           </button>
         </div>
-        <p v-else class="truncate text-5xl font-bold tracking-[-1.2px]">{{ formatRupiah(revenue ?? 0) }}</p>
+        <p v-else class="truncate text-3xl font-bold tracking-[-1px] sm:text-4xl 2xl:text-5xl leading-tight">{{ formatRupiah(revenue ?? 0) }}</p>
       </div>
       <span
         v-if="growthLabel"
@@ -66,7 +66,7 @@ const growthLabel = computed(() =>
       </span>
     </div>
 
-    <div v-if="periodLabel || target" class="mt-auto flex flex-col gap-2 pt-8">
+    <div v-if="periodLabel || target" class="mt-auto flex flex-col gap-2">
       <div class="flex justify-between gap-4 text-xs font-medium text-success-soft">
         <span>{{ periodLabel }}</span>
         <span v-if="target">Target: {{ formatRupiahCompact(target) }}</span>
