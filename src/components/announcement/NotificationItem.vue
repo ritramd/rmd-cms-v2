@@ -22,12 +22,19 @@ defineEmits<{
 const router = useRouter()
 const bodyId = useId()
 
-// Machine faults are red in the design, stock (and refunds) orange.
-const DANGER_TYPES = new Set(['machine_error', 'maintenance'])
-const tone = computed(() => (DANGER_TYPES.has(props.notification.type) ? 'danger' : 'warning'))
-const tones: Record<'warning' | 'danger', { icon: IconName; tile: string; accent: string }> = {
+// Machine faults are red in the design, stock (and refunds) orange; a cleared error is green.
+type Tone = 'warning' | 'danger' | 'success'
+const TONE_BY_TYPE: Record<string, Tone> = {
+  machine_error: 'danger',
+  machine_offline: 'danger',
+  maintenance: 'danger',
+  machine_error_cleared: 'success',
+}
+const tone = computed<Tone>(() => TONE_BY_TYPE[props.notification.type] ?? 'warning')
+const tones: Record<Tone, { icon: IconName; tile: string; accent: string }> = {
   warning: { icon: 'restock', tile: 'bg-warning-soft', accent: 'text-warning' },
   danger: { icon: 'power-off', tile: 'bg-danger-soft', accent: 'text-danger' },
+  success: { icon: 'restart', tile: 'bg-success-soft', accent: 'text-success-strong' },
 }
 
 /**
