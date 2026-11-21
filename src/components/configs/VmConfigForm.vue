@@ -36,39 +36,39 @@ const field = (name: keyof VmConfigForm) => [fieldClass, fieldStateClass(!!props
 <template>
   <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
     <header class="flex flex-col gap-1">
-      <h2 class="text-lg font-bold text-ink-strong">VM Configuration</h2>
+      <h2 class="text-lg font-bold text-ink-strong">Konfigurasi Kiosk</h2>
       <p class="text-sm text-ink-muted">
-        Pengaturan kiosk mesin <span class="font-bold text-ink-strong">{{ code }}</span>
+        Fitur, tampilan, dan pembayaran di layar mesin <span class="font-bold text-ink-strong">{{ code }}</span>.
       </p>
       <p v-if="!exists" class="mt-1 rounded-lg bg-warning-soft px-3 py-2 text-xs font-medium text-warning-strong">
-        Mesin ini belum pernah dibuatkan config. Menyimpan akan membuat config baru.
+        Mesin ini belum punya konfigurasi. Konfigurasi baru akan dibuat saat disimpan.
       </p>
     </header>
 
     <div class="flex flex-col">
-      <h3 class="text-xs font-bold tracking-[1.2px] text-ink-subtle uppercase">Fitur</h3>
+      <h3 class="text-xs font-bold tracking-[1.2px] text-ink-subtle uppercase">Fitur Mesin</h3>
       <div class="divide-y divide-line-soft">
-        <ConfigToggleRow v-model="form.isIdleScreen" label="Idle Screen" hint="Tampilkan layar idle saat mesin tidak dipakai" />
-        <ConfigToggleRow v-model="form.isCash" label="Pembayaran Tunai" hint="Terima uang tunai (cash)" />
-        <ConfigToggleRow v-model="form.isQris" label="QRIS" hint="Wajib isi MID & TID bila aktif" />
-        <ConfigToggleRow v-model="form.isEmoney" label="E-Money" :locked="!isDev" />
-        <ConfigToggleRow v-model="form.isVoucher" label="Voucher" />
-        <ConfigToggleRow v-model="form.isMaintenance" label="Under Maintenance" hint="Mesin berhenti melayani transaksi" />
+        <ConfigToggleRow v-model="form.isIdleScreen" label="Layar Idle" hint="Tampilkan layar idle saat mesin tidak digunakan." />
+        <ConfigToggleRow v-model="form.isCash" label="Pembayaran Tunai" hint="Terima pembayaran dengan uang tunai." />
+        <ConfigToggleRow v-model="form.isQris" label="QRIS" hint="Terima pembayaran QRIS. MID dan TID wajib diisi." />
+        <ConfigToggleRow v-model="form.isEmoney" label="E-Money" hint="Terima pembayaran kartu e-money." :locked="!isDev" />
+        <ConfigToggleRow v-model="form.isVoucher" label="Voucher" hint="Terima kode voucher saat pembayaran." />
+        <ConfigToggleRow v-model="form.isMaintenance" label="Mode Maintenance" hint="Mesin berhenti melayani transaksi." />
       </div>
     </div>
 
     <div class="flex flex-col gap-4">
-      <h3 class="text-xs font-bold tracking-[1.2px] text-ink-subtle uppercase">Alur & Tampilan</h3>
+      <h3 class="text-xs font-bold tracking-[1.2px] text-ink-subtle uppercase">Tampilan & Alur Belanja</h3>
       <div class="grid gap-4 sm:grid-cols-2">
-        <ConfigField label="Journey" :error="errors.journey">
+        <ConfigField label="Alur Belanja" :error="errors.journey">
           <select v-model="form.journey" :class="field('journey')">
-            <option value="" disabled>Pilih Journey</option>
+            <option value="" disabled>Pilih alur belanja</option>
             <option v-for="o in journeyOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </ConfigField>
-        <ConfigField label="Module" :error="errors.module">
+        <ConfigField label="Modul" :error="errors.module">
           <select v-model="form.module" :class="field('module')">
-            <option value="" disabled>Pilih Modul</option>
+            <option value="" disabled>Pilih modul</option>
             <option v-for="o in MODULE_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </ConfigField>
@@ -77,23 +77,23 @@ const field = (name: keyof VmConfigForm) => [fieldClass, fieldStateClass(!!props
             v-model.trim="form.prefixUrl"
             type="text"
             :list="templateListId"
-            placeholder="Pilih atau ketik template"
+            placeholder="Pilih atau ketik nama template"
             :class="field('prefixUrl')"
           />
           <datalist :id="templateListId">
             <option v-for="o in TEMPLATE_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
           </datalist>
         </ConfigField>
-        <ConfigField label="Button Color" :error="errors.buttonColor">
-          <ColorField v-model="form.buttonColor" label="Button Color" :invalid="!!errors.buttonColor" />
+        <ConfigField label="Warna Tombol" :error="errors.buttonColor">
+          <ColorField v-model="form.buttonColor" label="Warna Tombol" :invalid="!!errors.buttonColor" />
         </ConfigField>
-        <ConfigField label="Font Color" :error="errors.fontColor">
-          <ColorField v-model="form.fontColor" label="Font Color" :invalid="!!errors.fontColor" />
+        <ConfigField label="Warna Teks" :error="errors.fontColor">
+          <ColorField v-model="form.fontColor" label="Warna Teks" :invalid="!!errors.fontColor" />
         </ConfigField>
       </div>
       <!-- Live sample of the two colors, as the kiosk button will look. -->
       <div class="flex items-center gap-3 rounded-lg bg-surface-muted px-3 py-2">
-        <span class="text-xs text-ink-muted">Pratinjau</span>
+        <span class="text-xs text-ink-muted">Pratinjau tombol</span>
         <span
           class="rounded-lg px-4 py-1.5 text-sm font-bold"
           :style="{ backgroundColor: form.buttonColor, color: form.fontColor }"
@@ -104,14 +104,14 @@ const field = (name: keyof VmConfigForm) => [fieldClass, fieldStateClass(!!props
     </div>
 
     <div class="flex flex-col gap-4">
-      <h3 class="text-xs font-bold tracking-[1.2px] text-ink-subtle uppercase">Payment Gateway</h3>
+      <h3 class="text-xs font-bold tracking-[1.2px] text-ink-subtle uppercase">Pembayaran</h3>
       <div class="grid gap-4 sm:grid-cols-2">
-        <ConfigField label="QR Provider" :error="errors.qrProviders" :locked="!isDev" class="sm:col-span-2">
+        <ConfigField label="Penyedia QR" :error="errors.qrProviders" :locked="!isDev" class="sm:col-span-2">
           <input
             v-model.trim="form.qrProviders"
             type="text"
             :list="providerListId"
-            placeholder="Pilih Payment Gateway"
+            placeholder="Pilih penyedia QR"
             :disabled="!isDev"
             :class="[field('qrProviders'), 'disabled:cursor-not-allowed disabled:opacity-60']"
           />

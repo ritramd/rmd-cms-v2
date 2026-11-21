@@ -18,7 +18,7 @@ const checked = defineModel<boolean>({ required: true })
       <span class="flex items-center gap-2 text-sm font-medium text-ink-strong">
         {{ label }}
         <span v-if="locked" class="rounded bg-surface-muted px-1.5 py-0.5 text-[10px] font-bold text-ink-subtle">
-          Hanya dev
+          Khusus dev
         </span>
       </span>
       <span v-if="hint" class="text-xs text-ink-muted">{{ hint }}</span>

@@ -1,4 +1,6 @@
 import type { IconName, NavIconName } from '@/assets/icons'
+import type { User } from '@/types/user'
+import { canSeeVmConfig } from '@/utils/access'
 
 // Sidebar from the dashboard design (1097:42249). Paths reuse rmd-cms v1 routes (utils/menuItems.ts).
 
@@ -6,6 +8,8 @@ export interface NavLink {
   label: string
   icon: NavIconName
   to: string
+  /** Shown only when this returns true (v1 menu `condition`); always shown when absent. */
+  visible?: (user: User | null) => boolean
 }
 
 export interface NavGroup {
@@ -40,7 +44,7 @@ export const navigation: NavEntry[] = [
       { label: 'Vending Sales Digital', to: '/sales-digital' },
     ],
   },
-  { label: 'Configs', icon: 'tune', to: '/vm-config' },
+  { label: 'Konfigurasi Mesin', icon: 'tune', to: '/vm-config', visible: canSeeVmConfig },
   // Figma: Stok group (1097:34077). Same paths as v1.
   {
     label: 'Stok',

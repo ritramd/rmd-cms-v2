@@ -16,7 +16,7 @@ defineProps<{
     <span class="flex items-center gap-2">
       <span :class="fieldLabelClass">{{ label }}</span>
       <span v-if="locked" class="rounded bg-surface-muted px-1.5 py-0.5 text-[10px] font-bold text-ink-subtle">
-        Hanya dev
+        Khusus dev
       </span>
     </span>
     <slot />

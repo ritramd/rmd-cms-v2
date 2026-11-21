@@ -23,6 +23,7 @@ import {
 } from '@/services/vmConfig'
 import type { SalesMachine } from '@/types/sales'
 import type { ConfigErrors, MachineConfigForm as MachineForm, VmConfigForm as VmForm } from '@/types/vmConfig'
+import { canSeeVmConfig, hasVmConfigPackage } from '@/utils/access'
 import { validateMachineConfig, validateVmConfig } from '@/utils/vmConfig'
 
 const route = useRoute()
@@ -31,8 +32,11 @@ const router = useRouter()
 const session = getSession()
 const pkg = session?.package ?? ''
 const isDev = (session?.subRole ?? '').includes('dev')
-/** v1 opens the page to Pro and Priority packages only (usePageRoles: vm-config → PRO_PRIORITY). */
-const hasAccess = ['Pro', 'Priority'].some((p) => pkg.includes(p))
+/** Main clients only (the menu is hidden for others); the URL can still be opened directly. */
+const isMainClient = canSeeVmConfig(session)
+/** v1 opens the page to Pro and Priority packages only. */
+const hasPackage = hasVmConfigPackage(session)
+const hasAccess = isMainClient && hasPackage
 /** v1: Cart Purchase journey for Priority / Pro packages and dev. */
 const canUseCart = pkg === 'Priority' || pkg === 'Pro' || isDev
 
@@ -116,11 +120,11 @@ function requestSave() {
   machineErrors.value = validateMachineConfig(machineForm.value)
 
   if (vmForm.value.isQris && (!vmForm.value.mid.trim() || !vmForm.value.tid.trim())) {
-    showToast('MID & TID tidak boleh kosong jika Qris diaktifkan', 'error')
+    showToast('MID dan TID wajib diisi jika QRIS aktif.', 'error')
     return
   }
   if (Object.keys(vmErrors.value).length || Object.keys(machineErrors.value).length) {
-    showToast('Mohon lengkapi semua form yang diperlukan', 'error')
+    showToast('Lengkapi semua kolom yang wajib diisi.', 'error')
     return
   }
   saveError.value = null
@@ -135,11 +139,11 @@ async function confirmSave() {
     await saveVmConfig(selectedCode.value, vmForm.value)
     await saveMachineConfig(selectedCode.value, machineForm.value)
     confirmOpen.value = false
-    showToast('Semua konfigurasi berhasil disimpan', 'success')
+    showToast('Konfigurasi berhasil disimpan.', 'success')
     // v1 reloads the page; reload from the server so the form shows what was stored.
     void loadConfigs(selectedCode.value)
   } catch (err) {
-    saveError.value = err instanceof ApiError ? err.message : 'Terjadi kesalahan saat menyimpan konfigurasi'
+    saveError.value = err instanceof ApiError ? err.message : 'Konfigurasi gagal disimpan. Silakan coba lagi.'
   } finally {
     saving.value = false
   }
@@ -156,12 +160,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <DashboardLayout title="VM & Machine Config">
+  <DashboardLayout title="Konfigurasi Mesin">
     <template #header>
-      <PageHeader title="VM & Machine Config" />
+      <PageHeader title="Konfigurasi Mesin" />
     </template>
 
-    <section v-if="!hasAccess" class="rounded-2xl bg-surface p-8 text-center shadow-card">
+    <section v-if="!isMainClient" class="rounded-2xl bg-surface p-8 text-center shadow-card">
+      <p class="text-sm font-bold text-ink-strong">Halaman ini hanya untuk akun utama.</p>
+      <p class="mt-1 text-sm text-ink-muted">Hubungi pemilik akun untuk mengubah konfigurasi mesin.</p>
+    </section>
+    <section v-else-if="!hasPackage" class="rounded-2xl bg-surface p-8 text-center shadow-card">
       <p class="text-sm font-bold text-ink-strong">Halaman ini tersedia untuk paket Pro dan Priority.</p>
       <p class="mt-1 text-sm text-ink-muted">Upgrade paket untuk mengatur konfigurasi mesin.</p>
     </section>
@@ -169,8 +177,8 @@ onMounted(() => {
     <template v-else>
       <section class="flex flex-col gap-3 rounded-2xl bg-surface p-6 shadow-card">
         <div class="flex flex-col gap-1">
-          <h2 class="text-sm font-bold text-ink-strong">Vending Machine</h2>
-          <p class="text-xs text-ink-muted">Pilih mesin untuk melihat dan mengubah konfigurasinya.</p>
+          <h2 class="text-sm font-bold text-ink-strong">Pilih Mesin</h2>
+          <p class="text-xs text-ink-muted">Pilih mesin vending untuk melihat dan mengubah konfigurasinya.</p>
         </div>
         <div class="flex flex-wrap items-center gap-4">
           <MachineSearchField
@@ -191,7 +199,7 @@ onMounted(() => {
       </section>
 
       <p v-if="!selectedCode" class="py-10 text-center text-sm text-ink-muted">
-        Belum ada mesin dipilih.
+        Belum ada mesin yang dipilih.
       </p>
       <p v-else-if="loading" class="py-10 text-center text-sm text-ink-muted">Memuat konfigurasi…</p>
       <div v-else-if="loadError" class="flex flex-col items-center gap-2 py-10 text-sm text-ink-muted">
@@ -217,17 +225,17 @@ onMounted(() => {
         <div
           class="sticky bottom-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface px-6 py-4 shadow-card"
         >
-          <p class="text-sm text-ink-muted">Config akan diterapkan di mesin sekitar 15 menit setelah disimpan.</p>
-          <AppButton variant="primary" :disabled="saving" @click="requestSave">Simpan Semua Konfigurasi</AppButton>
+          <p class="text-sm text-ink-muted">Perubahan diterapkan ke mesin sekitar 15 menit setelah disimpan.</p>
+          <AppButton variant="primary" :disabled="saving" @click="requestSave">Simpan Konfigurasi</AppButton>
         </div>
       </template>
     </template>
 
     <ConfirmDialog
       :open="confirmOpen"
-      title="Sudah double check?"
-      :message="`Config untuk ${selectedCode} akan terimplementasi 15 menit dari submit.`"
-      confirm-label="Simpan Semua Config"
+      title="Simpan konfigurasi?"
+      :message="`Pastikan semua pengaturan untuk ${selectedCode} sudah benar. Perubahan akan diterapkan ke mesin sekitar 15 menit setelah disimpan.`"
+      confirm-label="Ya, Simpan"
       :busy="saving"
       :error="saveError"
       @confirm="confirmSave"
