@@ -509,15 +509,17 @@ function formatDate(dateStr?: string): string {
       @tooltip-close="closeOnboarding"
     />
 
-    <!-- 2. Add Items to Flashsale Modal (1097:40947) with its Tooltip (1097:41485) -->
+    <!-- 2. Add Items to Flashsale Modal (1097:37474 / 1097:37897 / 1097:40947) with its Tooltip (1097:41485) -->
     <AddFlashsaleItemModal
       :open="addItemModalOpen"
       :flashsale-id="activeRule?.id ?? 1"
       :flashsale-name="activeRule?.name ?? 'Flashsale 1'"
       :vmcode="vmcode"
+      :existing-items="activeRule?.items ?? []"
       :show-tooltip="currentStep === 'flashsale_modal_item'"
       @close="addItemModalOpen = false"
       @saved="onSaveItems"
+      @delete-item="onDeleteItem"
       @tooltip-next="handleTooltipNext"
       @tooltip-close="closeOnboarding"
     />

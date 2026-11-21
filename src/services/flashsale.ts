@@ -130,6 +130,78 @@ const INITIAL_DEMO_RULES: FlashsaleRule[] = [
     ],
   },
   {
+    id: 4,
+    vmcode: DEFAULT_MACHINE_CODE,
+    name: 'FLASHSALE 4',
+    days: ['Sabtu', 'Minggu'],
+    startDate: '2026-04-24',
+    endDate: '2026-04-25',
+    startTime: '00:00',
+    endTime: '23:59',
+    discountValue: 20,
+    status: 'scheduled',
+    items: [
+      {
+        id: 41,
+        flashsaleId: 4,
+        productId: 2,
+        name: 'AQUA Mineral Water',
+        displayName: 'AQUA Mineral 600ml',
+        sku: '1220001',
+        price: 4000,
+        photo: '',
+      },
+    ],
+  },
+  {
+    id: 5,
+    vmcode: DEFAULT_MACHINE_CODE,
+    name: 'FLASHSALE 5',
+    days: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
+    startDate: '2026-04-26',
+    endDate: '2026-04-30',
+    startTime: '07:00',
+    endTime: '19:00',
+    discountValue: 18,
+    status: 'scheduled',
+    items: [
+      {
+        id: 51,
+        flashsaleId: 5,
+        productId: 3,
+        name: 'Teh Botol Sosro',
+        displayName: 'Teh Botol Sosro Kotak 250ml',
+        sku: '330101',
+        price: 3800,
+        photo: '',
+      },
+    ],
+  },
+  {
+    id: 6,
+    vmcode: DEFAULT_MACHINE_CODE,
+    name: 'FLASHSALE 6',
+    days: ['Rabu', 'Sabtu'],
+    startDate: '2026-04-29',
+    endDate: '2026-05-02',
+    startTime: '10:00',
+    endTime: '22:00',
+    discountValue: 25,
+    status: 'scheduled',
+    items: [
+      {
+        id: 61,
+        flashsaleId: 6,
+        productId: 4,
+        name: 'Pocari Sweat Can',
+        displayName: 'Pocari Sweat Can 330ml',
+        sku: '440101',
+        price: 7500,
+        photo: '',
+      },
+    ],
+  },
+  {
     id: 7,
     vmcode: DEFAULT_MACHINE_CODE,
     name: 'FLASHSALE 7',
@@ -351,6 +423,15 @@ export function deleteStoredRuleItem(ruleId: number, itemId: number): void {
   const rule = stored.find((r) => r.id === ruleId)
   if (rule && rule.items) {
     rule.items = rule.items.filter((i) => i.id !== itemId)
+    saveStoredRules(stored)
+  }
+}
+
+export function updateStoredRuleItems(ruleId: number, items: FlashsaleItemDetail[]): void {
+  const stored = getStoredRules()
+  const rule = stored.find((r) => r.id === ruleId)
+  if (rule) {
+    rule.items = [...items]
     saveStoredRules(stored)
   }
 }
