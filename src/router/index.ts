@@ -49,6 +49,81 @@ export const router = createRouter({
       component: () => import('@/pages/RestockHistoryPage.vue'),
       props: (route) => ({ machine: route.params.machine }),
     },
+    // Billing and subscription expiration: preserves v1 path (/subscription-end) and supports /billing
+    {
+      path: '/subscription-end',
+      name: 'subscription-end',
+      component: () => import('@/pages/BillingPage.vue'),
+    },
+    {
+      path: '/billing',
+      name: 'billing',
+      redirect: '/subscription-end',
+    },
+    // Same path as v1's "Ubah Password" (pages/ganti-password/index.vue)
+    {
+      path: '/ganti-password',
+      name: 'change-password',
+      component: () => import('@/pages/ChangePasswordPage.vue'),
+    },
+    // Promo & Flash sale: preserves v1 paths and matches Figma (1097:35691)
+    {
+      path: '/flashsale/:machine?',
+      name: 'flashsale',
+      component: () => import('@/pages/FlashsalePage.vue'),
+      props: true,
+    },
+    {
+      path: '/flashsale/kelola-:machine',
+      redirect: (to) => `/flashsale/${to.params.machine}`,
+    },
+    {
+      path: '/flashsale/tambah-:machine',
+      redirect: (to) => `/flashsale/${to.params.machine}?action=add`,
+    },
+    {
+      path: '/almost-expired',
+      name: 'almost-expired',
+      component: () => import('@/pages/AlmostExpiredPage.vue'),
+    },
+    {
+      path: '/almost-expired/:machine',
+      name: 'almost-expired-detail',
+      component: () => import('@/pages/AlmostExpiredDetailPage.vue'),
+    },
+    {
+      path: '/flashsale/almost-expired',
+      redirect: '/almost-expired',
+    },
+    {
+      path: '/diskon-kedaluarsa',
+      redirect: '/almost-expired',
+    },
+    {
+      path: '/diskon-kedaluarsa/:machine',
+      redirect: (to) => `/almost-expired/${to.params.machine}`,
+    },
+    // Help & Support: preserves v1 paths (/tutorial and /faq)
+    {
+      path: '/tutorial',
+      name: 'tutorial',
+      component: () => import('@/pages/TutorialPage.vue'),
+    },
+    {
+      path: '/faq',
+      name: 'faq',
+      component: () => import('@/pages/FaqPage.vue'),
+    },
+    // User Management: preserves legacy path (/users) and matches Figma (1097:28128)
+    {
+      path: '/users',
+      name: 'users',
+      component: () => import('@/pages/UserManagementPage.vue'),
+    },
+    {
+      path: '/user-management',
+      redirect: '/users',
+    },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     // Same path as v1 so existing links keep working.
     {

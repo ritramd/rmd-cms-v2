@@ -1,5 +1,27 @@
-export function formatRupiah(value: number): string {
-  return `Rp ${value.toLocaleString('id-ID')}`
+export function formatRupiah(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return 'Rp 0'
+  const num = typeof value === 'string' ? Number(value.replace(/[^0-9.-]+/g, '')) : Number(value)
+  if (isNaN(num)) return 'Rp 0'
+  return `Rp ${num.toLocaleString('id-ID')}`
+}
+
+/**
+ * Formats a number with thousand separators for input fields (e.g. 30000 -> "30.000").
+ * Returns empty string if value is 0, empty, null, or undefined.
+ */
+export function formatCurrencyInput(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return ''
+  const num = typeof value === 'string' ? Number(value.replace(/[^0-9]/g, '')) : Number(value)
+  if (isNaN(num) || num === 0) return ''
+  return num.toLocaleString('id-ID')
+}
+
+/**
+ * Parses a currency input string (e.g. "30.000" or "Rp 30.000") into a raw number (30000).
+ */
+export function parseCurrencyInput(value: string): number {
+  const digits = value.replace(/[^0-9]/g, '')
+  return digits ? parseInt(digits, 10) : 0
 }
 
 /**
@@ -25,4 +47,57 @@ export function formatRupiahCompact(value: number): string {
   ]
   const [size, suffix] = units.find(([size]) => Math.abs(value) >= size) ?? [1, '']
   return `Rp ${(value / size).toLocaleString('id-ID', { maximumFractionDigits: 1 })}${suffix}`
+}
+
+/**
+ * Formats a subscription end date (e.g. "2026-08-21") into Indonesian label:
+ * "Berlaku s/d 21 Agu 2026" (matches Figma 1097:12689).
+ */
+export function formatSubscriptionDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'Tidak terbatas'
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return `Berlaku s/d ${dateStr}`
+  const formatted = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+  return `Berlaku s/d ${formatted}`
+}
+
+/**
+ * Formats a date string (e.g. "2026-04-08 22:10" or ISO string) to full Indonesian format:
+ * "Rabu, 8 April 2026, 22:10 WIB" (matches Figma 1097:28316).
+ */
+export function formatIndonesianDateTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return '-'
+  // Normalize string: replace space with T if needed for valid Date parsing
+  const normalized = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T')
+  const date = new Date(normalized)
+  if (Number.isNaN(date.getTime())) return dateStr
+
+  const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  const monthNames = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ]
+
+  const dayName = dayNames[date.getDay()]
+  const day = date.getDate()
+  const monthName = monthNames[date.getMonth()]
+  const year = date.getFullYear()
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${dayName}, ${day} ${monthName} ${year}, ${hours}:${minutes} WIB`
 }

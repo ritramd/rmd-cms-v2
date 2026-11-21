@@ -3,14 +3,19 @@
 // Penjualan (1097:20239) adds a filter row below it through the default slot.
 import avatarPlaceholder from '@/assets/demo/avatar-admin.png'
 import NotificationMenu from '@/components/announcement/NotificationMenu.vue'
-import UserAvatar from '@/components/layout/UserAvatar.vue'
+import ProfileMenu from '@/components/profile/ProfileMenu.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getSession } from '@/services/auth'
 
-defineProps<{
-  title: string
-  searchPlaceholder: string
-}>()
+withDefaults(
+  defineProps<{
+    title: string
+    searchPlaceholder?: string
+  }>(),
+  {
+    searchPlaceholder: '',
+  },
+)
 
 defineEmits<{
   /** Enter in the search field. */
@@ -26,7 +31,7 @@ const userName = getSession()?.name ?? 'Admin'
     <div class="flex flex-wrap items-center justify-between gap-4">
       <h1 class="text-2xl font-bold text-ink-strong">{{ title }}</h1>
       <div class="flex items-center gap-4">
-        <label class="relative block w-64 max-w-[50vw]">
+        <label v-if="searchPlaceholder" class="relative block w-64 max-w-[50vw]">
           <span class="sr-only">{{ searchPlaceholder }}</span>
           <AppIcon name="search-sm" class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2" />
           <input
@@ -38,8 +43,8 @@ const userName = getSession()?.name ?? 'Admin'
           />
         </label>
         <NotificationMenu trigger="round" />
-        <!-- Placeholder photo until the user API exposes an avatar. -->
-        <UserAvatar :src="avatarPlaceholder" :name="userName" shape="round" />
+        <!-- User avatar with profile dropdown (Figma 1097:12648) -->
+        <ProfileMenu :src="avatarPlaceholder" :name="userName" shape="round" />
       </div>
     </div>
     <slot />

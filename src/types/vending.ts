@@ -2,6 +2,14 @@ export type VendingStatus = 'online' | 'offline' | 'maintenance'
 
 export type VendingType = 'snack' | 'drink' | 'coffee'
 
+export type StockFilterRange = 'all' | 'critical' | 'medium' | 'safe'
+
+export interface MachineFilterOptions {
+  status: VendingStatus | 'all'
+  stockRange: StockFilterRange
+  type: VendingType | 'all'
+}
+
 export interface VendingMachine {
   /** Shown as "ID: #…"; the machine code (vmcode) for API data. */
   id: string

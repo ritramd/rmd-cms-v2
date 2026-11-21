@@ -2,10 +2,11 @@
 // Figma: Daftar Mesin card (1097:42364)
 import { computed, ref, watch } from 'vue'
 import sortIcon from '@/assets/table/sort.svg'
+import MachineFilterPopover from '@/components/dashboard/MachineFilterPopover.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppPagination from '@/components/ui/AppPagination.vue'
 import VendingTableRow from '@/components/ui/VendingTableRow.vue'
-import type { VendingMachine, VendingStatus } from '@/types/vending'
+import type { MachineFilterOptions, StockFilterRange, VendingMachine, VendingStatus, VendingType } from '@/types/vending'
 
 const props = withDefaults(
   defineProps<{
@@ -23,6 +24,44 @@ defineEmits<{
   retry: []
   actions: [machine: VendingMachine]
 }>()
+
+const filters = defineModel<MachineFilterOptions>('filters', {
+  default: () => ({ status: 'all', stockRange: 'all', type: 'all' }),
+})
+const filterOpen = ref(false)
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.value.status !== 'all') count++
+  if (filters.value.stockRange !== 'all') count++
+  if (filters.value.type !== 'all') count++
+  return count
+})
+
+function statusLabel(s: VendingStatus | 'all') {
+  if (s === 'online') return 'Online'
+  if (s === 'offline') return 'Offline'
+  if (s === 'maintenance') return 'Maintenance'
+  return 'Semua'
+}
+
+function stockLabel(r: StockFilterRange) {
+  if (r === 'critical') return '< 40%'
+  if (r === 'medium') return '40%–70%'
+  if (r === 'safe') return '> 70%'
+  return 'Semua'
+}
+
+function typeLabel(t: VendingType | 'all') {
+  if (t === 'snack') return 'Snack'
+  if (t === 'drink') return 'Minuman'
+  if (t === 'coffee') return 'Kopi'
+  return 'Semua'
+}
+
+function resetFilters() {
+  filters.value = { status: 'all', stockRange: 'all', type: 'all' }
+}
 
 type SortKey = 'status' | 'stock'
 const sortKey = ref<SortKey | null>(null)
@@ -55,7 +94,7 @@ const rangeLabel = computed(() => {
   return `Menampilkan ${start}-${start + pageRows.value.length - 1} dari ${total} hasil`
 })
 
-// Back to the first page whenever the list changes (e.g. a new search).
+// Back to the first page whenever the list changes (e.g. a new search or filter).
 watch(() => props.machines, () => (page.value = 1))
 
 const columns: { label: string; sort?: SortKey; width: string; class?: string }[] = [
@@ -81,13 +120,89 @@ function ariaSort(key?: SortKey) {
         <h2 class="text-xl font-bold text-ink-strong">Daftar Mesin</h2>
         <p class="text-sm text-ink-muted"><slot name="subtitle" /></p>
       </div>
-      <div class="flex gap-3">
-        <AppButton icon="filter" @click="$emit('filter')">Filter</AppButton>
+      <div class="flex items-center gap-3">
+        <!-- Interactive Filter Popover matching Figma Component 7 -->
+        <MachineFilterPopover
+          v-model="filters"
+          v-model:open="filterOpen"
+          @reset="resetFilters"
+        >
+          <template #default="{ toggle }">
+            <AppButton
+              :icon="activeFilterCount > 0 ? 'filter-active' : 'filter'"
+              :variant="activeFilterCount > 0 ? 'primary' : 'secondary'"
+              :aria-expanded="filterOpen"
+              @click="toggle"
+            >
+              Filter
+              <span
+                v-if="activeFilterCount > 0"
+                class="ml-0.5 flex size-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-primary"
+              >
+                {{ activeFilterCount }}
+              </span>
+            </AppButton>
+          </template>
+        </MachineFilterPopover>
         <AppButton icon="download" @click="$emit('download')">Download</AppButton>
       </div>
     </div>
 
-    <div class="mt-8 overflow-x-auto">
+    <!-- Active filter chips -->
+    <div v-if="activeFilterCount > 0" class="mt-4 flex flex-wrap items-center gap-2">
+      <span class="text-xs font-medium text-ink-muted">Filter aktif:</span>
+      <span
+        v-if="filters.status !== 'all'"
+        class="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary"
+      >
+        Status: {{ statusLabel(filters.status) }}
+        <button
+          type="button"
+          class="cursor-pointer text-primary hover:text-primary-hover"
+          aria-label="Hapus filter status"
+          @click="filters.status = 'all'"
+        >
+          ✕
+        </button>
+      </span>
+      <span
+        v-if="filters.stockRange !== 'all'"
+        class="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary"
+      >
+        Stok: {{ stockLabel(filters.stockRange) }}
+        <button
+          type="button"
+          class="cursor-pointer text-primary hover:text-primary-hover"
+          aria-label="Hapus filter stok"
+          @click="filters.stockRange = 'all'"
+        >
+          ✕
+        </button>
+      </span>
+      <span
+        v-if="filters.type !== 'all'"
+        class="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary"
+      >
+        Tipe: {{ typeLabel(filters.type) }}
+        <button
+          type="button"
+          class="cursor-pointer text-primary hover:text-primary-hover"
+          aria-label="Hapus filter tipe"
+          @click="filters.type = 'all'"
+        >
+          ✕
+        </button>
+      </span>
+      <button
+        type="button"
+        class="text-xs font-semibold text-danger hover:underline cursor-pointer"
+        @click="resetFilters"
+      >
+        Reset Semua
+      </button>
+    </div>
+
+    <div class="mt-8 overflow-x-auto pb-16">
       <table class="w-full min-w-[960px] table-fixed text-left">
         <colgroup>
           <col v-for="col in columns" :key="col.label" :class="col.width" />
@@ -129,9 +244,10 @@ function ariaSort(key?: SortKey) {
           </tr>
           <template v-else>
             <VendingTableRow
-              v-for="machine in pageRows"
+              v-for="(machine, index) in pageRows"
               :key="machine.id"
               :machine="machine"
+              :is-upward="index >= 2"
               @actions="$emit('actions', $event)"
             />
             <tr v-if="!pageRows.length">

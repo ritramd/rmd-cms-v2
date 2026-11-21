@@ -4,10 +4,12 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import downloadIcon from '@/assets/sales/download.svg'
-import filterIcon from '@/assets/sales/filter.svg'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import DateField from '@/components/sales/DateField.vue'
+import DownloadConfirmModal from '@/components/sales/DownloadConfirmModal.vue'
+import MachineSearchField from '@/components/sales/MachineSearchField.vue'
 import SalesMachineTable from '@/components/sales/SalesMachineTable.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 import AppToast from '@/components/ui/AppToast.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import { ApiError } from '@/services/api'
@@ -92,17 +94,28 @@ const rangeError = computed(() =>
     : null,
 )
 
-// The machine list itself isn't date-filtered (same as v1): the dates apply to the downloads.
-function applyFilter() {
+const hasFilters = computed(() => Boolean(search.value || startDate.value || endDate.value))
+
+function resetFilters() {
+  search.value = ''
+  startDate.value = ''
+  endDate.value = ''
+}
+
+// No "Apply" button: dates auto-sync and validate as soon as they change.
+watch([startDate, endDate], () => {
   if (rangeError.value) {
     toast.value = rangeError.value
     return
   }
-  reloadFromFirstPage()
-}
+  syncQuery()
+})
 
+const isConfirmOpen = ref(false)
+const pendingMachines = ref<SalesMachine[]>([])
 const downloadingId = ref<number | null>(null)
 const bulkDownloading = ref(false)
+const isConfirmBusy = computed(() => Boolean(downloadingId.value || bulkDownloading.value))
 
 async function runDownload(list: SalesMachine[]) {
   if (rangeError.value) {
@@ -116,20 +129,51 @@ async function runDownload(list: SalesMachine[]) {
   }
 }
 
-async function downloadOne(machine: SalesMachine) {
-  downloadingId.value = machine.id
-  await runDownload([machine])
-  downloadingId.value = null
+function requestDownloadOne(machine: SalesMachine) {
+  if (rangeError.value) {
+    toast.value = rangeError.value
+    return
+  }
+  pendingMachines.value = [machine]
+  isConfirmOpen.value = true
 }
 
-async function downloadSelected() {
+function requestDownloadSelected() {
   if (!selected.value.length) {
     toast.value = 'Pilih mesin vending terlebih dahulu untuk mengunduh data penjualan.'
     return
   }
-  bulkDownloading.value = true
-  await runDownload(selected.value)
-  bulkDownloading.value = false
+  if (rangeError.value) {
+    toast.value = rangeError.value
+    return
+  }
+  pendingMachines.value = [...selected.value]
+  isConfirmOpen.value = true
+}
+
+function closeConfirm() {
+  if (isConfirmBusy.value) return
+  isConfirmOpen.value = false
+  pendingMachines.value = []
+}
+
+async function handleConfirmDownload() {
+  if (!pendingMachines.value.length) return
+  const list = pendingMachines.value
+  const isSingle = list.length === 1
+  if (isSingle) {
+    downloadingId.value = list[0].id
+  } else {
+    bulkDownloading.value = true
+  }
+  try {
+    await runDownload(list)
+    isConfirmOpen.value = false
+    pendingMachines.value = []
+  } finally {
+    downloadingId.value = null
+    bulkDownloading.value = false
+  }
 }
 
 const detailBase = computed(() => (props.channel === 'digital' ? '/sales-digital' : '/vending-sales'))
@@ -142,30 +186,28 @@ const buttonClass =
 <template>
   <DashboardLayout :title="channel === 'digital' ? 'Vending Sales Digital' : 'Vending Sales'">
     <template #header>
-      <PageHeader v-model:search="search" title="Daftar Mesin Vending" search-placeholder="Cari mesin...">
-        <!-- novalidate: the min/max hints on the date pickers shouldn't block submit; applyFilter explains a bad range. -->
-        <form class="flex flex-wrap items-end gap-6" novalidate @submit.prevent="applyFilter">
-          <div class="flex flex-wrap gap-6">
+      <PageHeader :title="channel === 'digital' ? 'Vending Sales Digital' : 'Daftar Mesin Vending'">
+        <!-- One row on desktop (fields shrink to fit), wrapping on smaller screens. -->
+        <div class="flex flex-wrap items-end gap-6 lg:flex-nowrap">
+          <MachineSearchField v-model="search" :machines="machines" placeholder="Cari mesin apa" />
+          <div class="flex flex-wrap gap-6 sm:flex-nowrap">
             <DateField v-model="startDate" label="Start Date" :max="endDate || undefined" />
             <DateField v-model="endDate" label="End Date" :min="startDate || undefined" />
           </div>
-          <div class="ml-auto flex items-center gap-4">
-            <button type="submit" :class="buttonClass" class="bg-action-dark px-6 py-2.5 hover:bg-ink-deep">
-              <img :src="filterIcon" alt="" />
-              Apply Filter
-            </button>
+          <div class="ml-auto flex shrink-0 items-center gap-4">
+            <AppButton v-if="hasFilters" icon="line-rotate-ccw" @click="resetFilters">Reset</AppButton>
             <button
               type="button"
               :class="buttonClass"
               class="border border-cta-border bg-cta px-[25px] py-[11px] hover:bg-primary"
               :disabled="bulkDownloading"
-              @click="downloadSelected"
+              @click="requestDownloadSelected"
             >
               <img :src="downloadIcon" alt="" />
               {{ bulkDownloading ? 'Mengunduh…' : selected.length ? `Download (${selected.length})` : 'Download' }}
             </button>
           </div>
-        </form>
+        </div>
       </PageHeader>
     </template>
 
@@ -181,7 +223,14 @@ const buttonClass =
       :loading="loading"
       :error="error"
       @retry="load"
-      @download="downloadOne"
+      @download="requestDownloadOne"
+    />
+
+    <DownloadConfirmModal
+      :open="isConfirmOpen"
+      :busy="isConfirmBusy"
+      @close="closeConfirm"
+      @confirm="handleConfirmDownload"
     />
 
     <AppToast v-model="toast" variant="error" />

@@ -24,6 +24,25 @@ import NotificationBell from '@/components/products/NotificationBell.vue'
 import ProductPagination from '@/components/products/ProductPagination.vue'
 import ProductSidebarItem from '@/components/products/ProductSidebarItem.vue'
 import ProductTableRow from '@/components/products/ProductTableRow.vue'
+import RedeemVoucherCard from '@/components/billing/RedeemVoucherCard.vue'
+import PromotionPaymentModal from '@/components/billing/PromotionPaymentModal.vue'
+import ProfileMenu from '@/components/profile/ProfileMenu.vue'
+import ChangePasswordModal from '@/components/profile/ChangePasswordModal.vue'
+import TutorialTable from '@/components/support/TutorialTable.vue'
+import TutorialFormModal from '@/components/support/TutorialFormModal.vue'
+import AppSidebar from '@/components/layout/AppSidebar.vue'
+import UserTable from '@/components/users/UserTable.vue'
+import AddUserModal from '@/components/users/AddUserModal.vue'
+import EditUserModal from '@/components/users/EditUserModal.vue'
+import DeleteUserModal from '@/components/users/DeleteUserModal.vue'
+import AlmostExpiredMachineTable from '@/components/almost-expired/AlmostExpiredMachineTable.vue'
+import AlmostExpiredItemTable from '@/components/almost-expired/AlmostExpiredItemTable.vue'
+import EditAlmostExpiredModal from '@/components/almost-expired/EditAlmostExpiredModal.vue'
+import AppBreadcrumb from '@/components/ui/AppBreadcrumb.vue'
+import type { AlmostExpiredMachine, AlmostExpiredItem } from '@/types/almostExpired'
+import type { UserAndVending, YourVending } from '@/types/user'
+import type { GuideItem } from '@/types/support'
+import type { VoucherData } from '@/types/billing'
 import type { IconName } from '@/assets/icons'
 import type { CatalogProduct } from '@/types/product'
 import type { ScreenProduct } from '@/types/screen'
@@ -52,6 +71,16 @@ const navItems: { icon: NavIconName; label: string }[] = [
 ]
 const activeNav = ref<NavIconName>('dashboard')
 const activeSub = ref('Daftar vending')
+
+const showBillingModal = ref(false)
+const showPasswordModal = ref(false)
+const sampleVoucher: VoucherData = {
+  voucher: 'PROMO-SAMPLE-2026',
+  clientId: 1,
+  duration: 1,
+  vmId: '1,2',
+  billingAmount: 600000,
+}
 
 const machines: VendingMachine[] = [
   { id: '829232', name: 'VM-001 Snack', type: 'snack', location: 'Lobby Utama', status: 'online', stock: 85, revenue: 1250000 },
@@ -106,6 +135,98 @@ function resetColors() {
   accentColor.value = defaultColors.accent
   screenColor.value = defaultColors.screen
 }
+
+const sampleGuides: GuideItem[] = [
+  { id: 1, title: 'Membaca pengumuman di papan pengumuman', type: 'tutorial', status: 'publish', file: '230815103625_Membaca-Pengumuman di Announcement Board.pdf' },
+  { id: 2, title: 'Pengambilan Data Sales Vending Machine', type: 'tutorial', status: 'publish', file: '230815102939_Pengambilan-Data Sales Vending Machine.pdf' },
+  { id: 3, title: 'Error CMOS', type: 'troubleshoot', status: 'publish', file: '230815110533_TROUBLESHOOT-CMOS.pdf' },
+]
+const galleryTutorialPage = ref(1)
+const galleryTutorialPerPage = ref(10)
+const showTutorialModal = ref(false)
+
+// Sample users from Figma 1097:28128
+const sampleUsers: UserAndVending[] = [
+  {
+    userId: 101,
+    roleId: 60,
+    userName: 'Axel Sungkar',
+    email: 'a.xels@gmail.com',
+    roleName: 'Pro',
+    totalCount: 9,
+    vendingMachineNames: [
+      'VM - Arrabox TMII 001',
+      'VM - Arrabox TMII 002',
+      'VM - Grand Indonesia Level 3',
+      'VM - Pondok Indah Mall 2',
+      'VM - Senayan City Ground',
+      'VM - Kota Kasablanka UG',
+      'VM - Central Park Mall',
+      'VM - Mall Kelapa Gading 3',
+      'VM - Gandaria City 1',
+    ],
+    lastUpdate: '2026-04-08 22:10',
+    parentId: 1,
+  },
+  {
+    userId: 102,
+    roleId: 59,
+    userName: 'Lina Prasetyo',
+    email: 'lina.pras@mail.co',
+    roleName: 'Starter',
+    totalCount: 3,
+    vendingMachineNames: ['VM - Arrabox TMII 001', 'VM - Arrabox TMII 002', 'VM - Central Park Mall'],
+    lastUpdate: '2026-04-09 08:45',
+    parentId: 1,
+  },
+]
+const sampleVendings: YourVending[] = [
+  { vendingId: 1, name: 'VM - Arrabox TMII 001' },
+  { vendingId: 2, name: 'VM - Arrabox TMII 002' },
+  { vendingId: 3, name: 'VM - Grand Indonesia Level 3' },
+  { vendingId: 4, name: 'VM - Pondok Indah Mall 2' },
+  { vendingId: 5, name: 'VM - Senayan City Ground' },
+]
+
+const galleryUserPage = ref(1)
+const galleryUserPageSize = ref(10)
+const showAddUserModal = ref(false)
+const showEditUserModal = ref(false)
+const showDeleteUserModal = ref(false)
+const gallerySelectedUser = ref<UserAndVending | null>(null)
+
+const sampleAlmostExpiredMachines: AlmostExpiredMachine[] = [
+  { id: 1, code: 'VMENIG010', location: 'VM - CIMB EVENT XTRA XPO MEDAN 001', totalItem: 20 },
+  { id: 2, code: 'VMENIG011', location: 'VM - CIMB EVENT XTRA XPO MEDAN 002', totalItem: 12 },
+  { id: 3, code: 'VMENIG012', location: 'VM - CIMB NIAGA Panakukkang Makassar', totalItem: 20 },
+]
+
+const sampleAlmostExpiredItems: AlmostExpiredItem[] = [
+  {
+    id: 1,
+    productId: 101,
+    name: 'VM - CIMB EVENT XTRA XPO MEDAN 001',
+    internalName: 'Bright Stuff Face Scrub',
+    photo: faceScrub,
+    price: 200000,
+    expiredDate: 'Rabu, 8 April 2026',
+    status: true,
+  },
+  {
+    id: 2,
+    productId: 102,
+    name: 'Promo RAMADHAN Cashback 20%',
+    internalName: 'Bright Stuff Face Scrub',
+    photo: faceScrub,
+    price: 150000,
+    expiredDate: 'Rabu, 8 April 2026',
+    status: true,
+  },
+]
+
+const showGalleryEditAlmostExpiredModal = ref(false)
+const gallerySelectedAlmostExpiredIds = ref<number[]>([1, 2])
+const galleryItemsToEdit = ref<AlmostExpiredItem[]>([sampleAlmostExpiredItems[0]])
 </script>
 
 <template>
@@ -142,6 +263,7 @@ function resetColors() {
           <h2 class="mb-4 text-xs font-bold tracking-wide text-ink-subtle uppercase">AppButton · IconButton · NotificationButton · TextLink</h2>
           <div class="flex flex-wrap items-center gap-4">
             <AppButton icon="filter">Filter</AppButton>
+            <AppButton variant="primary" icon="filter">Filter (Aktif)</AppButton>
             <AppButton icon="download">Export</AppButton>
             <AppButton variant="primary" icon="add">Tambah Vending</AppButton>
             <AppButton variant="primary" disabled>Disabled</AppButton>
@@ -294,6 +416,203 @@ function resetColors() {
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- Billing & Voucher Promotion Preview (Figma 1097:27746 & 1097:27910) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Billing & Voucher Redeem (Figma 1097:27746 & 1097:27910)
+          </h2>
+          <p class="text-sm text-ink-muted">Tampilan Langganan Habis dan Popup Konfirmasi Pembayaran Promosi</p>
+        </div>
+        <AppButton variant="primary" @click="showBillingModal = true">
+          Buka Modal Konfirmasi
+        </AppButton>
+      </div>
+
+      <div class="rounded-xl bg-canvas p-6">
+        <RedeemVoucherCard @submit="showBillingModal = true" />
+      </div>
+
+      <PromotionPaymentModal
+        :open="showBillingModal"
+        :voucher="sampleVoucher"
+        @close="showBillingModal = false"
+        @confirm="showBillingModal = false"
+      />
+    </section>
+
+    <!-- Profile Popover & Change Password Dialog Preview (Figma 1097:12648 & 1097:41893) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Profile Dropdown & Ganti Password (Figma 1097:12648 & 1097:41893)
+          </h2>
+          <p class="text-sm text-ink-muted">Dropdown popover profil dan dialog modal ganti kata sandi</p>
+        </div>
+        <AppButton variant="primary" @click="showPasswordModal = true">
+          Buka Dialog Ganti Password
+        </AppButton>
+      </div>
+
+      <div class="flex items-center gap-12 rounded-xl bg-canvas p-6">
+        <div>
+          <p class="mb-2 text-xs font-semibold text-ink-muted">Square Avatar Trigger (Header):</p>
+          <ProfileMenu align="left" />
+        </div>
+        <div>
+          <p class="mb-2 text-xs font-semibold text-ink-muted">Round Avatar Trigger (Page Header):</p>
+          <ProfileMenu shape="round" align="left" />
+        </div>
+      </div>
+
+      <ChangePasswordModal
+        :open="showPasswordModal"
+        @close="showPasswordModal = false"
+      />
+    </section>
+
+    <!-- Tutorial & Troubleshoot Table Preview (Figma 1097:27375) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Tutorial & Troubleshoot Table (Figma 1097:27375)
+          </h2>
+          <p class="text-sm text-ink-muted">Tabel panduan tutorial dan troubleshoot vending machine</p>
+        </div>
+        <AppButton variant="primary" @click="showTutorialModal = true">
+          Buka Modal Tambah Panduan
+        </AppButton>
+      </div>
+
+      <TutorialTable
+        v-model:page="galleryTutorialPage"
+        v-model:per-page="galleryTutorialPerPage"
+        :items="sampleGuides"
+        :total-items="sampleGuides.length"
+        :is-admin="true"
+        @add="showTutorialModal = true"
+      />
+
+      <TutorialFormModal
+        :open="showTutorialModal"
+        @close="showTutorialModal = false"
+        @submit="showTutorialModal = false"
+      />
+    </section>
+
+    <!-- User Management Table & Modals Preview (Figma 1097:28128, 1097:28419, 1097:28899, 1097:29379) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            User Management (Figma 1097:28128, 1097:28419, 1097:28899, 1097:29379)
+          </h2>
+          <p class="text-sm text-ink-muted">Tabel pengguna, tambah user modal, ubah user modal, dan konfirmasi hapus</p>
+        </div>
+        <div class="flex gap-2">
+          <AppButton variant="primary" @click="showAddUserModal = true">
+            Buka Tambah User Modal
+          </AppButton>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <div class="w-64 h-[780px] shrink-0 rounded-2xl border border-line-soft overflow-hidden shadow-card">
+          <AppSidebar />
+        </div>
+        <div class="flex-1 min-w-0 w-full overflow-hidden">
+          <UserTable
+            :users="sampleUsers"
+            :page="galleryUserPage"
+            :page-size="galleryUserPageSize"
+            @edit="(u) => { gallerySelectedUser = u; showEditUserModal = true }"
+            @delete="(u) => { gallerySelectedUser = u; showDeleteUserModal = true }"
+            @show-vendings="() => {}"
+            @toggle-sort="() => {}"
+          />
+        </div>
+      </div>
+
+      <AddUserModal
+        :open="showAddUserModal"
+        :your-vendings="sampleVendings"
+        @close="showAddUserModal = false"
+        @submit="() => showAddUserModal = false"
+      />
+
+      <EditUserModal
+        :open="showEditUserModal"
+        :user="gallerySelectedUser"
+        :your-vendings="sampleVendings"
+        @close="showEditUserModal = false"
+        @submit="() => showEditUserModal = false"
+      />
+
+      <DeleteUserModal
+        :open="showDeleteUserModal"
+        :user="gallerySelectedUser"
+        @close="showDeleteUserModal = false"
+        @confirm="() => showDeleteUserModal = false"
+      />
+    </section>
+
+    <!-- Almost Expired Items Preview (Figma 1097:27019, 1097:30280, 1097:30646, 1097:31104) -->
+    <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xs font-bold tracking-wide text-ink-subtle uppercase">
+            Almost Expired Item (Figma 1097:27019, 1097:30280, 1097:30646, 1097:31104)
+          </h2>
+          <p class="text-sm text-ink-muted">Tabel vending machine kedaluwarsa, tabel detail produk, breadcrumb, dan modal ubah harga (single & batch)</p>
+        </div>
+        <div class="flex gap-2">
+          <AppButton
+            variant="primary"
+            @click="galleryItemsToEdit = [...sampleAlmostExpiredItems]; showGalleryEditAlmostExpiredModal = true"
+          >
+            Buka Ubah Harga Modal (Batch)
+          </AppButton>
+        </div>
+      </div>
+
+      <!-- Breadcrumb preview -->
+      <div class="p-3 bg-surface-muted/50 rounded-xl">
+        <AppBreadcrumb
+          :items="[
+            { label: 'Almost Expired Item', to: '/almost-expired' },
+            { label: 'VMENIG010' }
+          ]"
+        />
+      </div>
+
+      <!-- Main list table preview -->
+      <div class="space-y-2">
+        <h3 class="text-sm font-semibold text-ink-strong">1. Tabel Daftar Vending Machine (1097:27019)</h3>
+        <AlmostExpiredMachineTable :machines="sampleAlmostExpiredMachines" />
+      </div>
+
+      <!-- Detail table preview -->
+      <div class="space-y-2">
+        <h3 class="text-sm font-semibold text-ink-strong">2. Tabel Detail Produk Kedaluwarsa (1097:30280)</h3>
+        <AlmostExpiredItemTable
+          v-model:selected-ids="gallerySelectedAlmostExpiredIds"
+          :items="sampleAlmostExpiredItems"
+          @edit="(item) => { galleryItemsToEdit = [item]; showGalleryEditAlmostExpiredModal = true }"
+        />
+      </div>
+
+      <!-- Edit Modal preview -->
+      <EditAlmostExpiredModal
+        :open="showGalleryEditAlmostExpiredModal"
+        :items="galleryItemsToEdit"
+        @close="showGalleryEditAlmostExpiredModal = false"
+        @save="() => showGalleryEditAlmostExpiredModal = false"
+      />
     </section>
   </main>
 </template>
