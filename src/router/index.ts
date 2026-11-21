@@ -60,6 +60,8 @@ export const router = createRouter({
       name: 'billing',
       redirect: '/subscription-end',
     },
+    // Same path as v1's "VM & Machine Config" (pages/vm-config); sidebar: Configs.
+    { path: '/vm-config', name: 'vm-config', component: () => import('@/pages/VmConfigPage.vue') },
     // Same path as v1's "Ubah Password" (pages/ganti-password/index.vue)
     {
       path: '/ganti-password',
