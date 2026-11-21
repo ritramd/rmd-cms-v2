@@ -21,6 +21,9 @@ const MESSAGES: Record<number, string> = {
 }
 
 function sendToLogin() {
+  if (router.currentRoute.value.path === '/subscription-end' || router.currentRoute.value.path === '/billing') {
+    return
+  }
   clearSession()
   const redirect = router.currentRoute.value.fullPath
   void router.push({ name: 'login', query: { redirect } })
@@ -55,6 +58,11 @@ async function send(
   }
 
   if (response.status === 401) sendToLogin()
+  if (response.status === 498) {
+    if (router.currentRoute.value.path !== '/subscription-end' && router.currentRoute.value.path !== '/billing') {
+      void router.push('/subscription-end')
+    }
+  }
   if (!response.ok) {
     // Write and download endpoints explain why they refused in { message } (validation, sub-user 403, …): prefer that.
     const explains = init.method !== 'GET' || init.download

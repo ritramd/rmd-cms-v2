@@ -26,3 +26,19 @@ export function formatRupiahCompact(value: number): string {
   const [size, suffix] = units.find(([size]) => Math.abs(value) >= size) ?? [1, '']
   return `Rp ${(value / size).toLocaleString('id-ID', { maximumFractionDigits: 1 })}${suffix}`
 }
+
+/**
+ * Formats a subscription end date (e.g. "2026-08-21") into Indonesian label:
+ * "Berlaku s/d 21 Agu 2026" (matches Figma 1097:12689).
+ */
+export function formatSubscriptionDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'Tidak terbatas'
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return `Berlaku s/d ${dateStr}`
+  const formatted = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+  return `Berlaku s/d ${formatted}`
+}
