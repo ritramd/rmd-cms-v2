@@ -102,7 +102,7 @@ export function apiSendForm<T>(path: string, method: 'POST' | 'PUT', body: FormD
 }
 
 /** POST/PUT a JSON body. */
-export function apiSendJson<T>(path: string, method: 'POST' | 'PUT', body: object): Promise<T> {
+export function apiSendJson<T>(path: string, method: 'POST' | 'PUT' | 'DELETE', body: object): Promise<T> {
   return request<T>(path, { method, body })
 }
 

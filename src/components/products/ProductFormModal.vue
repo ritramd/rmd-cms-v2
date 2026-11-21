@@ -9,6 +9,7 @@ import { storageUrl } from '@/config/env'
 import { ApiError } from '@/services/api'
 import { canEditInternalName, saveProduct } from '@/services/products'
 import type { ProductCategory, ProductFormValues, ProductRecord } from '@/types/product'
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/format'
 import { fieldClass, fieldLabelClass, fieldStateClass } from './formStyles'
 
 const props = defineProps<{
@@ -20,7 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  saved: [message: string]
+  saved: [message: string, formValues?: ProductFormValues]
 }>()
 
 const DISPLAY_NAME_MAX = 20
@@ -59,6 +60,14 @@ function setPreview(file: File | null) {
 }
 
 const currentPhoto = computed(() => previewUrl.value ?? storageUrl(props.product?.photo))
+
+const displayPrice = computed({
+  get: () => formatCurrencyInput(form.price),
+  set: (val: string) => {
+    const parsed = parseCurrencyInput(val)
+    form.price = parsed > 0 ? parsed : null
+  },
+})
 
 const displayNameTooLong = computed(() => form.displayName.length > DISPLAY_NAME_MAX)
 
@@ -101,7 +110,7 @@ async function submit() {
   submitting.value = true
   try {
     const message = await saveProduct(form, props.categories, props.product)
-    emit('saved', message)
+    emit('saved', message, { ...form })
   } catch (err) {
     submitError.value = err instanceof ApiError ? err.message : 'Gagal menyimpan produk.'
   } finally {
@@ -179,14 +188,13 @@ const labelClass = fieldLabelClass
                 Rp
               </span>
               <input
-                v-model.number="form.price"
-                type="number"
-                min="0"
+                v-model="displayPrice"
+                type="text"
                 inputmode="numeric"
                 placeholder="0"
-                class="pl-[51px] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                class="pl-[51px]"
                 :class="[fieldClass, fieldState(invalid('price'))]"
-                @wheel.prevent
+                @blur="($event.target as HTMLInputElement).value = displayPrice"
               />
             </span>
           </label>
@@ -232,7 +240,7 @@ const labelClass = fieldLabelClass
 
       <p v-if="submitError" role="alert" class="text-sm text-danger-strong">{{ submitError }}</p>
 
-      <div class="flex justify-end gap-3">
+      <div class="sticky -bottom-5 -mx-6 -mb-5 flex justify-end gap-3 px-6 py-4 border-t border-line/40 bg-surface z-10">
         <AppButton :disabled="submitting" @click="close">Batalkan</AppButton>
         <AppButton type="submit" variant="primary" :disabled="submitting">
           {{ submitting ? 'Menyimpan…' : submitLabel }}
