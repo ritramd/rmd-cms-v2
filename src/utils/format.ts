@@ -64,3 +64,40 @@ export function formatSubscriptionDate(dateStr: string | null | undefined): stri
   }).format(date)
   return `Berlaku s/d ${formatted}`
 }
+
+/**
+ * Formats a date string (e.g. "2026-04-08 22:10" or ISO string) to full Indonesian format:
+ * "Rabu, 8 April 2026, 22:10 WIB" (matches Figma 1097:28316).
+ */
+export function formatIndonesianDateTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return '-'
+  // Normalize string: replace space with T if needed for valid Date parsing
+  const normalized = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T')
+  const date = new Date(normalized)
+  if (Number.isNaN(date.getTime())) return dateStr
+
+  const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  const monthNames = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ]
+
+  const dayName = dayNames[date.getDay()]
+  const day = date.getDate()
+  const monthName = monthNames[date.getMonth()]
+  const year = date.getFullYear()
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${dayName}, ${day} ${monthName} ${year}, ${hours}:${minutes} WIB`
+}

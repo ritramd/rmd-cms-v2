@@ -30,6 +30,7 @@ export type IconName =
   | 'restock'
   | 'power-off'
   | 'filter'
+  | 'filter-active'
   | 'download'
   | 'add'
   | 'machine-snack'
@@ -69,6 +70,7 @@ export type IconName =
   | 'eye'
   | 'eye-off'
   | 'clock'
+  | 'release-alert'
   | LineIconName
 
 /** Stroke-drawn vectors (`line-*`). Unlike the glyph icons above, these export upright. */
@@ -81,6 +83,7 @@ export type LineIconName =
   | 'line-plus'
   | 'line-chevron-down'
   | 'line-filter'
+  | 'line-filter-active'
   | 'line-pencil'
   | 'line-pencil-active'
   | 'line-chevron-left'
@@ -103,7 +106,7 @@ export const icons = Object.fromEntries(
   Object.entries(files).map(([path, url]) => [path.slice(2, -4), url]),
 ) as Record<IconName, string>
 
-const UPRIGHT_ICONS = new Set<string>(['package', 'log-out', 'eye', 'eye-off', 'clock'])
+const UPRIGHT_ICONS = new Set<string>(['package', 'log-out', 'eye', 'eye-off', 'clock', 'release-alert'])
 
 /** Icon-font glyphs are exported upside-down (Figma flips the vector node); `line-*` and SVG vectors are not. */
 export function isFlippedGlyph(name: IconName): boolean {

@@ -33,12 +33,12 @@ const summary = computed(() => {
 const categoryName = computed(() => props.categories.find((c) => c.id === categoryId.value)?.category)
 
 const columns = [
-  { label: 'No', width: 'w-[8%]', class: 'pl-[61px]' },
-  { label: 'Product', width: 'w-[27%]' },
-  { label: 'SKU', width: 'w-[9%]' },
-  { label: 'Display Name', width: 'w-[29%]' },
-  { label: 'Price', width: 'w-[13%]' },
-  { label: 'Action', width: 'w-[14%]', class: 'pr-[61px] text-center' },
+  { label: 'No', width: 'w-[8%]', class: 'text-left' },
+  { label: 'Product', width: 'w-[28.5%]', class: 'text-left' },
+  { label: 'SKU', width: 'w-[9%]', class: 'text-left' },
+  { label: 'Display Name', width: 'w-[30%]', class: 'text-left' },
+  { label: 'Price', width: 'w-[13.5%]', class: 'text-left' },
+  { label: 'Action', width: 'w-[11%]', class: 'text-center' },
 ]
 </script>
 
@@ -70,7 +70,7 @@ const columns = [
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full min-w-[1040px] table-fixed text-left">
+      <table class="w-full min-w-[1100px] table-fixed text-left">
         <colgroup>
           <col v-for="col in columns" :key="col.label" :class="col.width" />
         </colgroup>

@@ -21,6 +21,7 @@ import {
   createFlashsale,
   DEFAULT_MACHINE_CODE,
   DEFAULT_MACHINE_NAME,
+  deleteFlashsales,
   deleteStoredRuleItem,
   fetchFlashsaleRules,
   getFlashsaleRuleById,
@@ -227,6 +228,16 @@ function backToList() {
   void router.replace({ query })
 }
 
+async function onDeleteRules(ids: number[]) {
+  try {
+    await deleteFlashsales(ids)
+    toast.value = `${ids.length} Flashsale berhasil dihapus.`
+    await loadData()
+  } catch {
+    toast.value = 'Gagal menghapus flashsale.'
+  }
+}
+
 function onEditItem(item: FlashsaleItemDetail) {
   editingProduct.value = {
     id: item.productId || item.id,
@@ -343,7 +354,7 @@ function formatDate(dateStr?: string): string {
             <button
               id="btn-tambah-item-flashsale"
               type="button"
-              class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-sans text-sm font-semibold text-white shadow-primary transition-all hover:bg-primary-hover active:scale-95 cursor-pointer"
+              class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-sans text-sm font-semibold text-white shadow-primary transition-all hover:bg-primary-hover active:scale-95 cursor-pointer whitespace-nowrap"
               @click="onOpenAddItem(activeRule)"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -480,6 +491,7 @@ function formatDate(dateStr?: string): string {
             @select-rule="onSelectRule"
             @add-item="onOpenAddItem"
             @edit="onSelectRule"
+            @delete-rules="onDeleteRules"
           />
         </div>
       </div>

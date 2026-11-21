@@ -2,23 +2,26 @@
 // Figma: Status Vending card (1097:42322)
 import AppIcon from '@/components/ui/AppIcon.vue'
 import StatusCountCard from '@/components/ui/StatusCountCard.vue'
+import type { VendingStatus } from '@/types/vending'
 
 defineProps<{
   total: number | null
   online: number | null
   offline: number | null
+  activeStatus?: VendingStatus | 'all'
   loading?: boolean
   error?: string | null
 }>()
 
 defineEmits<{
   retry: []
+  selectStatus: [status: 'online' | 'offline']
 }>()
 </script>
 
 <template>
   <section
-    class="flex flex-col justify-between gap-4 rounded-[32px] border border-white bg-surface p-6 shadow-card"
+    class="flex h-[230px] flex-col justify-between rounded-[32px] border border-white bg-surface p-6 shadow-card"
     :aria-busy="loading"
   >
     <div class="flex items-start justify-between">
@@ -40,8 +43,20 @@ defineEmits<{
       </button>
     </div>
     <div v-else class="flex flex-col gap-3">
-      <StatusCountCard status="online" label="Online" :count="online ?? 0" />
-      <StatusCountCard status="offline" label="Offline" :count="offline ?? 0" />
+      <StatusCountCard
+        status="online"
+        label="Online"
+        :count="online ?? 0"
+        :active="activeStatus === 'online'"
+        @click="$emit('selectStatus', 'online')"
+      />
+      <StatusCountCard
+        status="offline"
+        label="Offline"
+        :count="offline ?? 0"
+        :active="activeStatus === 'offline'"
+        @click="$emit('selectStatus', 'offline')"
+      />
     </div>
   </section>
 </template>
