@@ -1,0 +1,33 @@
+name: Deploy staging (new-cms-stg)
+
+on:
+  push:
+    branches: [main] # merging a PR into main also triggers this
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Run deploy script on Staging-New
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STG_HOST }}
+          username: ${{ secrets.STG_USER }}
+          key: ${{ secrets.STG_SSH_KEY }}
+          fingerprint: ${{ secrets.STG_HOST_FINGERPRINT }}
+          command_timeout: 20m
+          # The key is restricted server-side (authorized_keys command=) to
+          # /home/jenkins-slave/deploy-rmd-cms-v2.sh, so this script line is informational.
+          script: /home/jenkins-slave/deploy-rmd-cms-v2.sh
+
+      - name: Smoke check
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://new-cms-stg.smartven.id/)
+          echo "HTTP $code"
+          test "$code" = "200"
