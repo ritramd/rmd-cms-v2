@@ -6,6 +6,29 @@ export interface RecapSales {
   count: { monthlySales: number; dailySales: number; weeklySales: number }
   /** Gross amount (settled transactions), in Rupiah. */
   total: { monthlySales: number; dailySales: number; weeklySales: number }
+  /** Change vs. the same stretch of the previous period; missing on older backends. */
+  growth?: { monthlySales: RecapSalesGrowth; dailySales: RecapSalesGrowth; weeklySales: RecapSalesGrowth }
+}
+
+export interface RecapSalesGrowth {
+  /** Percent change, one decimal; 100 when the previous period had no sales. */
+  percentage: number
+  diff: number
+  trend: 'up' | 'down' | 'flat'
+  previousTotal: number
+  /** Span compared against, e.g. "2026-10-01 00:00:00 sampai 2026-10-21 14:30:00". */
+  previousPeriod?: string
+}
+
+/** GET /client/revenue-target (rmd-api-cms clientRevenueTarget.controller.ts → getTargetProgress). */
+export interface RevenueTargetProgress {
+  /** 0 when the client has set no target for the month. */
+  target_amount: number
+  current_revenue: number
+  percentage_achieved: number
+  remaining_gap: number
+  month: number
+  year: number
 }
 
 /** Sales lists in the Penjualan menu; same pages as v1's /vending-sales and /sales-digital. */
