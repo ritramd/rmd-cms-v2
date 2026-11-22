@@ -97,7 +97,7 @@ onBeforeUnmount(() => {
         :aria-activedescendant="open && matches.length ? `${listId}-${highlighted}` : undefined"
         :placeholder="placeholder"
         autocomplete="off"
-        class="h-7 min-w-24 flex-1 bg-transparent text-sm text-ink-strong outline-none placeholder:text-ink-subtle"
+        class="h-7 min-w-24 flex-1 bg-transparent text-sm text-ink-strong outline-none placeholder:text-ink-subtle [&::-webkit-search-cancel-button]:appearance-none"
         @focus="open = true"
         @input="((open = true), (highlighted = 0))"
         @keydown="onKeydown"
