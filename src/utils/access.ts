@@ -11,6 +11,20 @@ export function canSeeVmConfig(user: User | null): boolean {
   return hasSubRole(user, 'main-client') && !hasSubRole(user, 'offline')
 }
 
+/** Any subscription package (v1 packageAllList / usePageRoles ALL_CAN). */
+export function hasAnyPackage(user: User | null): boolean {
+  return ['Starter', 'Pro', 'Priority'].some((pkg) => (user?.package ?? '').includes(pkg))
+}
+
+/**
+ * Log menu (v1 utils/menuItems.ts "Log"): any package, or the internal ts/ops/dev roles; hidden for
+ * the offline role. Log Transaksi and Log Perubahan also need a package (v1 ALL_CAN); Log Error doesn't.
+ */
+export function canSeeLog(user: User | null): boolean {
+  if (hasSubRole(user, 'offline')) return false
+  return hasAnyPackage(user) || ['ts', 'ops', 'dev'].some((role) => hasSubRole(user, role))
+}
+
 /** The page itself also needs a Pro or Priority package (v1 usePageRoles: vm-config → PRO_PRIORITY). */
 export function hasVmConfigPackage(user: User | null): boolean {
   return ['Pro', 'Priority'].some((pkg) => (user?.package ?? '').includes(pkg))

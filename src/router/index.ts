@@ -60,6 +60,32 @@ export const router = createRouter({
       name: 'billing',
       redirect: '/subscription-end',
     },
+    // Same paths as v1's "Log" group (pages/log-transaksi, pages/log-error, pages/log-perubahan).
+    {
+      path: '/log-transaksi',
+      name: 'log-transaksi',
+      component: () => import('@/pages/LogMachinesPage.vue'),
+      props: { kind: 'transaction' },
+    },
+    {
+      path: '/log-transaksi/:machine',
+      name: 'log-transaksi-machine',
+      component: () => import('@/pages/TransactionLogPage.vue'),
+      props: true,
+    },
+    {
+      path: '/log-error',
+      name: 'log-error',
+      component: () => import('@/pages/LogMachinesPage.vue'),
+      props: { kind: 'error' },
+    },
+    {
+      path: '/log-error/:machine',
+      name: 'log-error-machine',
+      component: () => import('@/pages/ErrorLogPage.vue'),
+      props: true,
+    },
+    { path: '/log-perubahan', name: 'log-perubahan', component: () => import('@/pages/ChangeLogPage.vue') },
     // Same path as v1's "VM & Machine Config" (pages/vm-config); sidebar: Configs.
     { path: '/vm-config', name: 'vm-config', component: () => import('@/pages/VmConfigPage.vue') },
     // Same path as v1's "Ubah Password" (pages/ganti-password/index.vue)
