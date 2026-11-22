@@ -4,7 +4,7 @@
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import ErrorLogTable from '@/components/logs/ErrorLogTable.vue'
+import ErrorLogTable from '@/components/log/ErrorLogTable.vue'
 import DateField from '@/components/sales/DateField.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppToast from '@/components/ui/AppToast.vue'

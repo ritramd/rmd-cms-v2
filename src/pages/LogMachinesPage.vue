@@ -5,7 +5,7 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import LogNotice from '@/components/logs/LogNotice.vue'
+import LogNotice from '@/components/log/LogNotice.vue'
 import MachineSearchField from '@/components/sales/MachineSearchField.vue'
 import SalesMachineTable from '@/components/sales/SalesMachineTable.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
