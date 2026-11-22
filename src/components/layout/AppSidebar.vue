@@ -13,10 +13,8 @@ const route = useRoute()
 const { currentStep } = useOnboarding()
 
 const user = getSession()
-/** Links with a `visible` rule the user doesn't meet are left out. */
-const entries = navigation.filter(
-  (entry) => entry === 'divider' || isNavGroup(entry) || !entry.visible || entry.visible(user),
-)
+/** Links and groups with a `visible` rule the user doesn't meet are left out. */
+const entries = navigation.filter((entry) => entry === 'divider' || !entry.visible || entry.visible(user))
 
 const navPaths = navigation.flatMap((entry) =>
   entry === 'divider' ? [] : isNavGroup(entry) ? entry.children.map((c) => c.to) : [entry.to],
