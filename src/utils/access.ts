@@ -11,6 +11,16 @@ export function canSeeVmConfig(user: User | null): boolean {
   return hasSubRole(user, 'main-client') && !hasSubRole(user, 'offline')
 }
 
+/**
+ * Billing menu (v1 utils/menuItems.ts "Billing"): the dev, bvs and main-client sub roles; hidden for
+ * the offline role. Only the menu: /subscription-end stays open to everyone, since an expired
+ * subscription (HTTP 498) sends any user there, as in v1.
+ */
+export function canSeeBilling(user: User | null): boolean {
+  if (hasSubRole(user, 'offline')) return false
+  return ['dev', 'bvs', 'main-client'].some((role) => hasSubRole(user, role))
+}
+
 /** Any subscription package (v1 packageAllList / usePageRoles ALL_CAN). */
 export function hasAnyPackage(user: User | null): boolean {
   return ['Starter', 'Pro', 'Priority'].some((pkg) => (user?.package ?? '').includes(pkg))

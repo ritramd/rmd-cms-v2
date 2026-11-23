@@ -60,7 +60,13 @@ export async function getValidToken(): Promise<string | null> {
   const user = getSession()
   if (!user?.token) return null
   if (!isExpired(user.token)) return user.token
+  return regenerateToken()
+}
 
+/** GET /regenerate-token (refresh cookie) and store the new token; null when it fails. */
+async function regenerateToken(): Promise<string | null> {
+  const user = getSession()
+  if (!user) return null
   try {
     const response = await fetch(`${API_BASE}/regenerate-token`, {
       credentials: 'include',
@@ -74,6 +80,16 @@ export async function getValidToken(): Promise<string | null> {
   } catch {
     return null
   }
+}
+
+/**
+ * After a subscription payment settles (v1 useSelfBilling → refreshSessionAfterSettlement): get a
+ * fresh token and store the new subscription end date, so the app stops treating it as expired.
+ */
+export async function refreshSessionAfterPayment(subscriptionEndDate: string | null): Promise<void> {
+  await regenerateToken()
+  const user = getSession()
+  if (user && subscriptionEndDate) saveSession({ ...user, subscription_end_date: subscriptionEndDate })
 }
 
 function isExpired(token: string): boolean {

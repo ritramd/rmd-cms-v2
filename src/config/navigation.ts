@@ -1,6 +1,6 @@
 import type { IconName, NavIconName } from '@/assets/icons'
 import type { User } from '@/types/user'
-import { canSeeLog, canSeeVmConfig } from '@/utils/access'
+import { canSeeBilling, canSeeLog, canSeeVmConfig } from '@/utils/access'
 
 // Sidebar from the dashboard design (1097:42249). Paths reuse rmd-cms v1 routes (utils/menuItems.ts).
 
@@ -88,7 +88,8 @@ export const navigation: NavEntry[] = [
       { label: 'Log Perubahan', to: '/log-perubahan' },
     ],
   },
-  { label: 'Billing', icon: 'receipt-long', to: '/subscription-end' },
+  // v1 "Billing" → "Pembayaran Tagihan" (/subscription-end).
+  { label: 'Billing', icon: 'receipt-long', to: '/subscription-end', visible: canSeeBilling },
   {
     label: 'User Management',
     icon: 'manage-accounts',
