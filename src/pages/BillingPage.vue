@@ -10,7 +10,6 @@ import PromotionPaymentModal from '@/components/billing/PromotionPaymentModal.vu
 import RedeemVoucherCard from '@/components/billing/RedeemVoucherCard.vue'
 import SelfBillingPanel from '@/components/billing/SelfBillingPanel.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import AppIcon from '@/components/ui/AppIcon.vue'
 import AppToast from '@/components/ui/AppToast.vue'
 import { useSelfBillingPayment } from '@/composables/useSelfBillingPayment'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
@@ -112,8 +111,6 @@ onMounted(async () => {
 })
 
 // Search filters
-const topSearch = ref('')
-const guideSearch = ref('')
 
 // State
 const loadingVoucher = ref(false)
@@ -228,27 +225,10 @@ function handleSuccessConfirmed() {
 </script>
 
 <template>
-  <DashboardLayout title="Billing" v-model:search="topSearch">
-    <!-- Custom Page Header with Sub-row Search ("Cari panduan apa") matching Figma -->
+  <DashboardLayout title="Billing">
+    <!-- No search here: nothing on the billing tabs is searchable. -->
     <template #header>
-      <PageHeader
-        v-model:search="topSearch"
-        title="Billing"
-        search-placeholder="Cari mesin..."
-      >
-        <div class="flex items-center justify-between gap-6">
-          <label class="relative block w-[480px] max-w-full">
-            <span class="sr-only">Cari panduan apa</span>
-            <AppIcon name="search-sm" class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2" />
-            <input
-              v-model="guideSearch"
-              type="search"
-              placeholder="Cari panduan apa"
-              class="w-full rounded-lg border border-line bg-surface py-3 pr-3 pl-9 text-sm text-ink-strong outline-none placeholder:text-ink-subtle focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          </label>
-        </div>
-      </PageHeader>
+      <PageHeader title="Billing" />
     </template>
 
     <div class="flex flex-col items-center gap-6">
