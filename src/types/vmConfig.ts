@@ -7,6 +7,7 @@ export type ConfigFlag = boolean | number | string | null | undefined
 
 /** Row of vending_machines_configs as GET /config/:vmCode returns it (data is null when none exists). */
 export interface VmConfigRow {
+  id?: number
   code: string
   isIdleScreen?: ConfigFlag
   isCash?: ConfigFlag
@@ -24,7 +25,11 @@ export interface VmConfigRow {
   tid?: string | null
   mid_emoney?: string | null
   tid_emoney?: string | null
+  updated_at?: string | null
 }
+
+/** Alias for backward compatibility */
+export type VmConfig = VmConfigRow
 
 /** Editable kiosk settings of one machine ("VM Configuration"). */
 export interface VmConfigForm {
@@ -50,6 +55,20 @@ export interface VmConfigForm {
 export interface MachineConfigForm {
   categories: string
   isDropSensor: boolean
+  type_machine?: string
+}
+
+export interface VmMachineDetail {
+  id?: number
+  code: string
+  name?: string
+  type_machine?: string
+  categories?: string
+  isDropSensor?: ConfigFlag
+  isOnline?: boolean
+  temperature?: string
+  last_online?: string
+  subscription_end_date?: string
 }
 
 export interface ConfigOption {

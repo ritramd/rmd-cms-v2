@@ -3,7 +3,10 @@ import type { SalesMachine } from '@/types/sales'
 import type { ConfigFlag, MachineConfigForm, VmConfigForm, VmConfigRow } from '@/types/vmConfig'
 import { apiGet, apiSendJson } from './api'
 
-const isOn = (flag: ConfigFlag) => flag === true || flag === 1 || flag === '1'
+export const toBoolean = (flag: unknown): boolean =>
+  flag === true || flag === 1 || flag === '1' || flag === 'true'
+
+const isOn = (flag: ConfigFlag): boolean => toBoolean(flag)
 
 /** Every machine the account can configure (GET /vending-machines?itemPerPage=all, as v1). */
 export async function fetchConfigMachines(): Promise<SalesMachine[]> {
@@ -43,27 +46,32 @@ export async function fetchVmConfig(code: string): Promise<{ exists: boolean; fo
 
 /** Hardware settings of a machine (GET /vm/admin/:code; 204 when the machine is unknown). */
 export async function fetchMachineConfig(code: string): Promise<MachineConfigForm> {
-  const body = await apiGet<{ data?: { categories?: string | null; isDropSensor?: ConfigFlag } | null } | undefined>(
+  const body = await apiGet<{ data?: { categories?: string | null; isDropSensor?: ConfigFlag; type_machine?: string } | null } | undefined>(
     `/vm/admin/${encodeURIComponent(code)}`,
   )
   return {
     categories: body?.data?.categories ?? '',
     isDropSensor: isOn(body?.data?.isDropSensor),
+    type_machine: body?.data?.type_machine || 'TCN22',
   }
 }
 
 /** PUT /config: creates or updates the machine's config row. */
-export async function saveVmConfig(code: string, form: VmConfigForm): Promise<void> {
+export async function saveVmConfig(code: string, form: Partial<VmConfigForm>): Promise<void> {
   await apiSendJson('/config', 'PUT', { configData: { code, ...form } })
 }
 
 /**
  * PUT /vm/config. The endpoint writes every column it receives onto vending_machines, so only the
- * two edited fields are sent: v1 sent the whole row it had loaded, overwriting values the machine
+ * edited fields are sent: v1 sent the whole row it had loaded, overwriting values the machine
  * had reported since (last_online, cash_remain, description, …) with stale ones.
  */
-export async function saveMachineConfig(code: string, form: MachineConfigForm): Promise<void> {
+export async function saveMachineConfig(code: string, form: Partial<MachineConfigForm>): Promise<void> {
   await apiSendJson('/vm/config', 'PUT', {
-    configData: { code, categories: form.categories, isDropSensor: form.isDropSensor },
+    configData: { code, ...form },
   })
 }
+
+/** Backward compatibility aliases for LivePreviewPage */
+export const updateVmConfig = saveVmConfig
+export const updateMachineConfig = saveMachineConfig

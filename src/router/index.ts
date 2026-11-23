@@ -52,6 +52,39 @@ export const router = createRouter({
       component: () => import('@/pages/RestockHistoryPage.vue'),
       props: (route) => ({ machine: route.params.machine }),
     },
+    // Kelola Vending group: preserves v1 paths and matches Figma (1097:20872, 1097:16416)
+    {
+      path: '/kelola-vending',
+      name: 'kelola-vending',
+      component: () => import('@/pages/KelolaVendingPage.vue'),
+    },
+    {
+      path: '/kelola-vending/:machine',
+      redirect: (to) => `/kelola-vending?machine=${to.params.machine}`,
+    },
+    {
+      path: '/ui-material',
+      name: 'ui-material',
+      component: () => import('@/pages/UiMaterialPage.vue'),
+    },
+    {
+      path: '/live-preview',
+      name: 'live-preview',
+      component: () => import('@/pages/LivePreviewPage.vue'),
+    },
+    {
+      path: '/kelola-vending/live-preview',
+      redirect: '/live-preview',
+    },
+    {
+      path: '/ui-editor',
+      redirect: '/live-preview',
+    },
+    {
+      path: '/editor-visual',
+      name: 'editor-visual',
+      component: () => import('@/pages/LivePreviewPage.vue'),
+    },
     // Billing and subscription expiration: preserves v1 path (/subscription-end) and supports /billing
     {
       path: '/subscription-end',
