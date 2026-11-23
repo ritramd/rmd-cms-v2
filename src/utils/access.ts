@@ -21,6 +21,14 @@ export function canSeeBilling(user: User | null): boolean {
   return ['dev', 'bvs', 'main-client'].some((role) => hasSubRole(user, role))
 }
 
+/**
+ * Setting the monthly revenue target on the dashboard: main clients only, like the VM config. The
+ * backend (clientRevenueTarget.controller setTarget) also refuses sub accounts.
+ */
+export function canEditRevenueTarget(user: User | null): boolean {
+  return hasSubRole(user, 'main-client') && !hasSubRole(user, 'offline')
+}
+
 /** Any subscription package (v1 packageAllList / usePageRoles ALL_CAN). */
 export function hasAnyPackage(user: User | null): boolean {
   return ['Starter', 'Pro', 'Priority'].some((pkg) => (user?.package ?? '').includes(pkg))
