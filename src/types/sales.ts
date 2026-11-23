@@ -31,6 +31,14 @@ export interface RevenueTargetProgress {
   year: number
 }
 
+/** POST /client/revenue-target (setTarget): upserts the client's target for one month. */
+export interface SaveRevenueTargetPayload {
+  year: number
+  month: number
+  /** Whole rupiah. */
+  target_amount: number
+}
+
 /** Sales lists in the Penjualan menu; same pages as v1's /vending-sales and /sales-digital. */
 export type SalesChannel = 'vending' | 'digital'
 
