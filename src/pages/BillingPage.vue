@@ -149,8 +149,8 @@ async function handleRedeemVoucher(code: string) {
     showConfirmModal.value = true
   } catch (err) {
     const message = err instanceof ApiError || err instanceof Error ? err.message : 'Voucher Tidak Valid!'
+    // Shown under the field; a toast as well would repeat it.
     voucherError.value = message
-    showToast(message, 'error')
   } finally {
     loadingVoucher.value = false
   }
