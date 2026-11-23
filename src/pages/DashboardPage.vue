@@ -43,9 +43,17 @@ const revenuePeriod = computed(() => {
   return start && end ? `Bulan ini · ${formatDateRange(start, end)}` : 'Bulan ini'
 })
 
+/**
+ * Figma sample data only for an account whose machine list has loaded and is empty. Never while
+ * loading: the samples used to flash in (growth badge, target bar, VM-001…) and vanish once the
+ * real list arrived. Never after an error either, where they would pass for real figures.
+ */
+const isDefaultMachines = computed(() => !list.loading.value && !list.error.value && !list.data.value?.length)
+
 // Real figures whenever /recap-sales answered; the Figma sample values only for the demo dashboard.
 const revenueGrowth = computed(() => {
   if (recap.data.value) return recap.data.value.growth?.monthlySales.percentage
+  if (recap.loading.value) return undefined
   return isDefaultMachines.value ? 12.5 : undefined
 })
 
@@ -59,14 +67,11 @@ const growthCompare = computed(() => {
 /** Shown only once the client has set a target for the month (0 means none). */
 const revenueTargetAmount = computed(() => {
   if (revenueTarget.data.value) return revenueTarget.data.value.target_amount || undefined
+  if (revenueTarget.loading.value || recap.loading.value) return undefined
   return isDefaultMachines.value && !recap.data.value ? 150000000 : undefined
 })
 
-const machines = computed(() => {
-  if (list.data.value && list.data.value.length > 0) return list.data.value
-  return DEFAULT_DASHBOARD_MACHINES
-})
-const isDefaultMachines = computed(() => machines.value === DEFAULT_DASHBOARD_MACHINES)
+const machines = computed(() => (isDefaultMachines.value ? DEFAULT_DASHBOARD_MACHINES : (list.data.value ?? [])))
 const attention = computed(() => buildAttentionItems(machines.value))
 
 const vendingSummary = computed(() => {
