@@ -1,5 +1,8 @@
-import { apiGet, apiSendJson } from './api'
+import { ApiError, apiDownload, apiGet, apiSendJson } from './api'
+import type { Pagination } from '@/types/product'
 import type {
+  BillingHistoryQuery,
+  BillingHistoryRecord,
   BillingMachine,
   OutstandingBilling,
   PaymentConfirmedRequest,
@@ -98,4 +101,38 @@ export async function getPaymentToken(payload: PaymentTokenRequest): Promise<Pay
  */
 export async function confirmPayment(payload: PaymentConfirmedRequest): Promise<PaymentConfirmedResponse> {
   return apiSendJson<PaymentConfirmedResponse>('/billing-payment/payment-confirmed', 'POST', payload)
+}
+
+// ─── Renewal history ──────────────────────────────────────────────────────────
+
+function historyParams(query: Omit<BillingHistoryQuery, 'page' | 'itemPerPage'>): URLSearchParams {
+  const params = new URLSearchParams()
+  if (query.search) params.set('search', query.search)
+  if (query.status) params.set('status', query.status)
+  if (query.startDate) params.set('startDate', query.startDate)
+  if (query.endDate) params.set('endDate', query.endDate)
+  return params
+}
+
+/**
+ * The paying account's renewals, newest first: self billing and voucher payments together
+ * (GET /billing-payment/history; v1 dashboard/billing-history.vue). A sub account sees its parent's.
+ */
+export async function fetchBillingHistory(
+  query: BillingHistoryQuery,
+): Promise<{ data: BillingHistoryRecord[]; pagination: Pagination | null }> {
+  const params = historyParams(query)
+  params.set('page', String(query.page))
+  params.set('itemPerPage', String(query.itemPerPage))
+  const body = await apiGet<{ data: BillingHistoryRecord[] | null; pagination?: Pagination }>(
+    `/billing-payment/history?${params}`,
+  )
+  // The model answers data: null when its query fails.
+  if (!body.data) throw new ApiError(500, 'Riwayat perpanjangan tidak tersedia saat ini.')
+  return { data: body.data, pagination: body.pagination ?? null }
+}
+
+/** Every matching renewal as an .xlsx (GET /billing-payment/history/download). */
+export function downloadBillingHistory(query: Omit<BillingHistoryQuery, 'page' | 'itemPerPage'>): Promise<void> {
+  return apiDownload(`/billing-payment/history/download?${historyParams(query)}`, 'riwayat-perpanjangan.xlsx')
 }

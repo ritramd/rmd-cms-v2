@@ -101,3 +101,22 @@ export function formatIndonesianDateTime(dateStr: string | null | undefined): st
 
   return `${dayName}, ${day} ${monthName} ${year}, ${hours}:${minutes} WIB`
 }
+
+/**
+ * A DATETIME the API sends as WIB wall-clock time, with or without a misleading "Z"
+ * ("2026-07-26T18:02:01.000Z" means 18:02 WIB) → "26 Jul 2026, 18.02 WIB".
+ */
+export function formatWibDateTime(value: string | null | undefined): string {
+  if (!value) return '-'
+  const date = new Date(`${value.replace(' ', 'T').slice(0, 19)}+07:00`)
+  if (Number.isNaN(date.getTime())) return value
+  const text = new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+  return `${text} WIB`
+}

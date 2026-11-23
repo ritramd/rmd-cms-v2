@@ -131,6 +131,46 @@ export type SelfBillingOutcome =
   | { kind: 'closed' }
   | { kind: 'error'; message: string }
 
+// ─── Renewal history (GET /billing-payment/history, billingPaymentController.getUnifiedHistory) ───
+
+/** billingPaymentModel.getPaymentStatus: settlement → SUCCESS, capture/pending/authorize → IN PROGRESS. */
+export type BillingPaymentStatus = 'SUCCESS' | 'IN PROGRESS' | 'FAILED'
+
+/** `status` query of the history endpoints (getDashboardStatusTransactionStatuses). */
+export type BillingHistoryStatusFilter = 'success' | 'in_progress' | 'failed'
+
+/** One renewal attempt; self billing sessions and legacy voucher payments share the table. */
+export interface BillingHistoryRecord {
+  id: number
+  order_id: string
+  transaction_status: string | null
+  payment_status: BillingPaymentStatus
+  /** "self_billing", or null / "legacy" for voucher payments. */
+  payment_flow: string | null
+  /** Rupiah as a decimal string, e.g. "26089400". */
+  gross_amount: string | number | null
+  /** WIB wall-clock time, sent with a "Z" suffix. */
+  payment_date: string | null
+  created_at: string | null
+  /** The end date this payment extends the subscription to. */
+  subscription_end_date: string | null
+  subscription_package: string | null
+  billing_period_months: number | null
+  outstanding_months?: number | null
+  machine_count?: number | null
+  machine_list: { id: number; code: string; name: string }[]
+  voucherCode?: string | null
+}
+
+export interface BillingHistoryQuery {
+  page: number
+  itemPerPage: number
+  search?: string
+  status?: BillingHistoryStatusFilter
+  startDate?: string
+  endDate?: string
+}
+
 export interface MidtransSnapResult {
   status_code: string
   status_message?: string

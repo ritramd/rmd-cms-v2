@@ -1,6 +1,7 @@
 import type { IconName, NavIconName } from '@/assets/icons'
 import type { User } from '@/types/user'
 import { canSeeBilling, canSeeLog, canSeeVmConfig } from '@/utils/access'
+import { subscriptionBadge, type SubscriptionBadge } from '@/utils/subscription'
 
 // Sidebar from the dashboard design (1097:42249). Paths reuse rmd-cms v1 routes (utils/menuItems.ts).
 
@@ -16,9 +17,16 @@ export interface NavGroup {
   label: string
   icon: IconName
   to?: string
-  children: { label: string; to: string }[]
+  children: NavChild[]
   /** Shown only when this returns true (v1 menu `condition`); always shown when absent. */
   visible?: (user: User | null) => boolean
+}
+
+export interface NavChild {
+  label: string
+  to: string
+  /** Optional status pill after the label, e.g. an ended subscription. */
+  badge?: (user: User | null) => SubscriptionBadge | null
 }
 
 export type NavEntry = NavLink | NavGroup | 'divider'
@@ -88,8 +96,18 @@ export const navigation: NavEntry[] = [
       { label: 'Log Perubahan', to: '/log-perubahan' },
     ],
   },
-  // v1 "Billing" → "Pembayaran Tagihan" (/subscription-end).
-  { label: 'Billing', icon: 'receipt-long', to: '/subscription-end', visible: canSeeBilling },
+  // v1 "Billing" → "Pembayaran Tagihan" (/subscription-end); the history was v1's dev-only
+  // "Dashboard Billing History", here scoped to the client's own renewals.
+  {
+    label: 'Billing',
+    icon: 'receipt-long',
+    to: '/subscription-end',
+    visible: canSeeBilling,
+    children: [
+      { label: 'Perpanjang Subscription', to: '/subscription-end', badge: subscriptionBadge },
+      { label: 'Riwayat Perpanjangan', to: '/billing-history' },
+    ],
+  },
   {
     label: 'User Management',
     icon: 'manage-accounts',
