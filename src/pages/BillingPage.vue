@@ -9,6 +9,7 @@ import PaymentSuccessModal from '@/components/billing/PaymentSuccessModal.vue'
 import PromotionPaymentModal from '@/components/billing/PromotionPaymentModal.vue'
 import RedeemVoucherCard from '@/components/billing/RedeemVoucherCard.vue'
 import SelfBillingPanel from '@/components/billing/SelfBillingPanel.vue'
+import SubscriptionStatusBanner from '@/components/billing/SubscriptionStatusBanner.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import AppToast from '@/components/ui/AppToast.vue'
 import { useSelfBillingPayment } from '@/composables/useSelfBillingPayment'
@@ -32,11 +33,16 @@ import type {
   VoucherData,
 } from '@/types/billing'
 import { loadMidtransSnap } from '@/utils/midtrans'
+import { subscriptionStatus } from '@/utils/subscription'
 
 const router = useRouter()
 const user = getSession()
 
 const tab = ref<BillingTab>('self')
+
+/** Early renewal or a required one; read once, the success modal leads away after paying. */
+const subscription = subscriptionStatus(user)
+const pageTitle = subscription.kind === 'expired' ? 'Subscription Berakhir' : 'Perpanjang Subscription'
 
 // ─── Self billing ────────────────────────────────────────────────────────────
 /** The account that pays: the parent for a sub account (same rule as the backend's getPayerUserId). */
@@ -225,13 +231,14 @@ function handleSuccessConfirmed() {
 </script>
 
 <template>
-  <DashboardLayout title="Billing">
+  <DashboardLayout :title="pageTitle">
     <!-- No search here: nothing on the billing tabs is searchable. -->
     <template #header>
-      <PageHeader title="Billing" />
+      <PageHeader :title="pageTitle" />
     </template>
 
     <div class="flex flex-col items-center gap-6">
+      <SubscriptionStatusBanner :status="subscription" />
       <BillingTabs v-model="tab" />
       <p
         v-if="isPolling"

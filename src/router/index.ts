@@ -1,10 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getSession } from '@/services/auth'
+import { isSubscriptionExpired } from '@/utils/subscription'
 
 declare module 'vue-router' {
   interface RouteMeta {
     /** Pages reachable without logging in. */
     public?: boolean
+    /** Still open once the subscription has ended (the renewal pages). */
+    allowExpired?: boolean
   }
 }
 
@@ -54,6 +57,13 @@ export const router = createRouter({
       path: '/subscription-end',
       name: 'subscription-end',
       component: () => import('@/pages/BillingPage.vue'),
+      meta: { allowExpired: true },
+    },
+    {
+      path: '/billing-history',
+      name: 'billing-history',
+      component: () => import('@/pages/BillingHistoryPage.vue'),
+      meta: { allowExpired: true },
     },
     {
       path: '/billing',
@@ -167,6 +177,12 @@ export const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (!to.meta.public && !getSession()) return { name: 'login', query: { redirect: to.fullPath } }
-  if (to.name === 'login' && getSession()) return { path: '/' }
+  const session = getSession()
+  if (!to.meta.public && !session) return { name: 'login', query: { redirect: to.fullPath } }
+  if (to.name === 'login' && session) return { path: '/' }
+  // v1 checkLogin(): an ended subscription sends the account to the renewal page. v1 only checked on
+  // the dashboard; here every page but the billing ones is closed until it is renewed.
+  if (session && !to.meta.public && !to.meta.allowExpired && isSubscriptionExpired(session)) {
+    return { name: 'subscription-end' }
+  }
 })

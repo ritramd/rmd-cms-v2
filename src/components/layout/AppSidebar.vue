@@ -78,6 +78,7 @@ watch(
             :label="child.label"
             :to="child.to"
             :active="isActive(child.to)"
+            :badge="child.badge?.(user)"
           />
         </SidebarNavGroup>
         <SidebarNavItem v-else :label="entry.label" :icon="entry.icon" :to="entry.to" :active="isActive(entry.to)" />
