@@ -2,15 +2,18 @@
 // Success dialog for completed billing payment (mirroring v1).
 import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
-import { formatRupiah } from '@/utils/format'
+import { formatRupiah, formatSubscriptionDate } from '@/utils/format'
 
 withDefaults(
   defineProps<{
     open: boolean
     amount?: number
+    /** New subscription end date, when known (self billing). */
+    activeUntil?: string | null
   }>(),
   {
     amount: 0,
+    activeUntil: null,
   },
 )
 
@@ -32,6 +35,7 @@ const emit = defineEmits<{
       >
         {{ formatRupiah(amount) }}
       </div>
+      <p v-if="activeUntil" class="text-sm font-medium text-ink-strong">{{ formatSubscriptionDate(activeUntil) }}</p>
 
       <div class="mt-4 flex w-full justify-center">
         <AppButton variant="primary" data-autofocus @click="emit('confirm')">
