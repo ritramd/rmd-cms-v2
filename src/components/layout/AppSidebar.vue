@@ -8,10 +8,15 @@ import SidebarNavItem from '@/components/ui/SidebarNavItem.vue'
 import SidebarSubItem from '@/components/ui/SidebarSubItem.vue'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { isNavGroup, navigation, type NavGroup } from '@/config/navigation'
+import { getSession } from '@/services/auth'
 
 const route = useRoute()
 const router = useRouter()
 const { currentStep } = useOnboarding()
+
+const user = getSession()
+/** Links and groups with a `visible` rule the user doesn't meet are left out. */
+const entries = navigation.filter((entry) => entry === 'divider' || !entry.visible || entry.visible(user))
 
 const navPaths = navigation.flatMap((entry) =>
   entry === 'divider' ? [] : isNavGroup(entry) ? entry.children.map((c) => c.to) : [entry.to],
@@ -120,7 +125,7 @@ watch(
     </div>
 
     <nav class="flex flex-1 flex-col gap-1 overflow-y-auto px-4 pt-6 pb-6" aria-label="Menu utama">
-      <template v-for="(entry, i) in navigation" :key="i">
+      <template v-for="(entry, i) in entries" :key="i">
         <hr v-if="entry === 'divider'" class="border-line-soft" />
         <SidebarNavGroup
           v-else-if="isNavGroup(entry)"
@@ -135,6 +140,7 @@ watch(
             :label="child.label"
             :to="child.to"
             :active="isActive(child.to)"
+            :badge="child.badge?.(user)"
           />
         </SidebarNavGroup>
         <SidebarNavItem v-else :label="entry.label" :icon="entry.icon" :to="entry.to" :active="isActive(entry.to)" />

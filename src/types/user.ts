@@ -12,6 +12,8 @@ export interface User {
   subscription_end_date: string | null
   client_id?: number
   client_name?: string
+  /** "perorangan" | "perusahaan"; companies may pay with a PPh deduction (v1 self billing). */
+  category?: string | null
 }
 
 export interface JsonApi<T> {

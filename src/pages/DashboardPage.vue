@@ -4,17 +4,23 @@ import { computed, ref } from 'vue'
 import AttentionCard from '@/components/dashboard/AttentionCard.vue'
 import MachineTable from '@/components/dashboard/MachineTable.vue'
 import RevenueCard from '@/components/dashboard/RevenueCard.vue'
+import RevenueTargetModal from '@/components/dashboard/RevenueTargetModal.vue'
 import VendingStatusCard from '@/components/dashboard/VendingStatusCard.vue'
+import AppToast from '@/components/ui/AppToast.vue'
 import { useAsyncData } from '@/composables/useAsyncData'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
+import { ApiError } from '@/services/api'
 import { getSession } from '@/services/auth'
-import { fetchRecapSales } from '@/services/sales'
+import { fetchRecapSales, fetchRevenueTarget, saveRevenueTarget } from '@/services/sales'
 import { fetchVendingMachines, fetchVendingStatus } from '@/services/vending'
 import type { AttentionItem } from '@/types/dashboard'
+import type { RevenueTargetProgress } from '@/types/sales'
 import type { MachineFilterOptions, VendingMachine } from '@/types/vending'
+import { canEditRevenueTarget } from '@/utils/access'
 import { buildAttentionItems } from '@/utils/attention'
 import { downloadCsv } from '@/utils/csv'
-import { formatDateRange } from '@/utils/format'
+import { formatDateRange, formatRupiah } from '@/utils/format'
+import { currentWibPeriod, defaultRevenueTarget } from '@/utils/revenueTarget'
 
 const search = ref('')
 const filters = ref<MachineFilterOptions>({
@@ -25,6 +31,7 @@ const filters = ref<MachineFilterOptions>({
 const greeting = `Selamat datang kembali, ${getSession()?.name ?? 'Admin'}.`
 
 const recap = useAsyncData(fetchRecapSales, 'Gagal memuat total pendapatan.') // GET /recap-sales
+const revenueTarget = useAsyncData(fetchRevenueTarget, 'Gagal memuat target pendapatan.') // GET /client/revenue-target
 const status = useAsyncData(fetchVendingStatus, 'Gagal memuat status mesin.') // GET /status-vending/resume
 const list = useAsyncData(fetchVendingMachines, 'Gagal memuat daftar mesin.') // GET /status-vending
 
@@ -42,11 +49,88 @@ const revenuePeriod = computed(() => {
   return start && end ? `Bulan ini · ${formatDateRange(start, end)}` : 'Bulan ini'
 })
 
-const machines = computed(() => {
-  if (list.data.value && list.data.value.length > 0) return list.data.value
-  return DEFAULT_DASHBOARD_MACHINES
+/**
+ * Figma sample data only for an account whose machine list has loaded and is empty. Never while
+ * loading: the samples used to flash in (growth badge, target bar, VM-001…) and vanish once the
+ * real list arrived. Never after an error either, where they would pass for real figures.
+ */
+const isDefaultMachines = computed(() => !list.loading.value && !list.error.value && !list.data.value?.length)
+
+// Real figures whenever /recap-sales answered; the Figma sample values only for the demo dashboard.
+const revenueGrowth = computed(() => {
+  if (recap.data.value) return recap.data.value.growth?.monthlySales.percentage
+  if (recap.loading.value) return undefined
+  return isDefaultMachines.value ? 12.5 : undefined
 })
-const isDefaultMachines = computed(() => machines.value === DEFAULT_DASHBOARD_MACHINES)
+
+/** "2026-10-01 00:00:00 sampai 2026-10-21 14:30:00" → "Dibanding 1–21 Okt 2026" */
+const growthCompare = computed(() => {
+  const period = recap.data.value?.growth?.monthlySales.previousPeriod
+  const [start, end] = period?.split(' sampai ').map((part) => part.slice(0, 10)) ?? []
+  return start && end ? `Dibanding ${formatDateRange(start, end)}` : undefined
+})
+
+/** Machines the client runs, for the default target; /status-vending/resume when the list failed. */
+const machineCount = computed(() => list.data.value?.length || Number(status.data.value?.total ?? 0))
+const defaultTarget = computed(() => defaultRevenueTarget(machineCount.value))
+
+/**
+ * The month's saved target (0 means none); otherwise Rp 10 jt per machine, marked as the default.
+ * Waits for everything it depends on so no sample or partial figure flashes in first.
+ */
+const revenueTargetView = computed<{ amount: number; isDefault: boolean } | null>(() => {
+  const saved = revenueTarget.data.value?.target_amount
+  if (saved) return { amount: saved, isDefault: false }
+  if (revenueTarget.loading.value || recap.loading.value || list.loading.value || status.loading.value) return null
+  if (isDefaultMachines.value && !recap.data.value) return { amount: 150000000, isDefault: false }
+  return { amount: defaultTarget.value, isDefault: true }
+})
+
+const canEditTarget = canEditRevenueTarget(getSession())
+const targetPeriod = computed(() => {
+  const data = revenueTarget.data.value
+  return data ? { year: data.year, month: data.month } : currentWibPeriod()
+})
+/** { year: 2026, month: 11 } → "November 2026" */
+const targetPeriodLabel = computed(() =>
+  new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(
+    new Date(targetPeriod.value.year, targetPeriod.value.month - 1, 1),
+  ),
+)
+
+const targetModalOpen = ref(false)
+const savingTarget = ref(false)
+const targetError = ref<string | null>(null)
+const toastMessage = ref<string | null>(null)
+
+function openTargetModal() {
+  targetError.value = null
+  targetModalOpen.value = true
+}
+
+async function onSaveTarget(amount: number) {
+  savingTarget.value = true
+  targetError.value = null
+  const period = targetPeriod.value
+  try {
+    await saveRevenueTarget({ ...period, target_amount: amount })
+    // Show the new target right away; the reload keeps it while it fetches the fresh progress.
+    const current = revenueTarget.data.value
+    const next: RevenueTargetProgress = current
+      ? { ...current, target_amount: amount }
+      : { target_amount: amount, current_revenue: 0, percentage_achieved: 0, remaining_gap: amount, ...period }
+    revenueTarget.data.value = next
+    targetModalOpen.value = false
+    toastMessage.value = `Target ${targetPeriodLabel.value} disimpan: ${formatRupiah(amount)}.`
+    void revenueTarget.reload()
+  } catch (err) {
+    targetError.value = err instanceof ApiError ? err.message : 'Gagal menyimpan target. Silakan coba lagi.'
+  } finally {
+    savingTarget.value = false
+  }
+}
+
+const machines = computed(() => (isDefaultMachines.value ? DEFAULT_DASHBOARD_MACHINES : (list.data.value ?? [])))
 const attention = computed(() => buildAttentionItems(machines.value))
 
 const vendingSummary = computed(() => {
@@ -118,16 +202,20 @@ function exportMachines() {
 <template>
   <DashboardLayout v-model:search="search" title="Ringkasan Bisnis" :subtitle="greeting">
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-      <!-- /recap-sales has no target or growth figures, so the card shows the period instead. -->
+      <!-- Growth from /recap-sales (month to date vs. the same days last month); target from /client/revenue-target, main clients set it by clicking it. -->
       <RevenueCard
         class="md:col-span-2 xl:col-span-2"
         :revenue="recap.data.value?.total.monthlySales ?? (isDefaultMachines ? 124500000 : null)"
         :loading="recap.loading.value"
         :error="recap.error.value"
         :period-label="revenuePeriod"
-        :target="isDefaultMachines ? 150000000 : undefined"
-        :growth="isDefaultMachines ? 12.5 : undefined"
+        :target="revenueTargetView?.amount"
+        :target-is-default="revenueTargetView?.isDefault"
+        :target-editable="canEditTarget"
+        :growth="revenueGrowth"
+        :growth-compare="growthCompare"
         @retry="recap.reload"
+        @edit-target="openTargetModal"
       />
       <VendingStatusCard
         class="xl:col-span-1"
@@ -162,5 +250,18 @@ function exportMachines() {
         {{ list.loading.value ? 'Memuat data mesin…' : `Memantau performa ${isDefaultMachines ? 24 : machines.length} mesin aktif hari ini` }}
       </template>
     </MachineTable>
+
+    <RevenueTargetModal
+      :open="targetModalOpen"
+      :current="revenueTarget.data.value?.target_amount || undefined"
+      :default-target="defaultTarget"
+      :machine-count="machineCount"
+      :period-label="targetPeriodLabel"
+      :busy="savingTarget"
+      :error="targetError"
+      @close="targetModalOpen = false"
+      @submit="onSaveTarget"
+    />
+    <AppToast v-model="toastMessage" variant="success" />
   </DashboardLayout>
 </template>

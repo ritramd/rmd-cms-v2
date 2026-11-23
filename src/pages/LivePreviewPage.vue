@@ -14,7 +14,6 @@ import { fetchKelolaVendingMachines } from '@/services/kelolaVending'
 import {
   fetchMachineConfig,
   fetchVmConfig,
-  toBoolean,
   updateMachineConfig,
   updateVmConfig,
 } from '@/services/vmConfig'
@@ -100,26 +99,27 @@ async function loadMachineConfig(code: string) {
       fetchMachineConfig(code),
     ])
 
-    if (vmConf) {
-      paymentConfig.value.qris = toBoolean(vmConf.isQris)
-      paymentConfig.value.cash = toBoolean(vmConf.isCash)
-      paymentConfig.value.card = toBoolean(vmConf.isEmoney)
-      if (vmConf.buttonColor) {
-        uiConfig.value.warnaAksen = vmConf.buttonColor
+    const form = vmConf?.form
+    if (form) {
+      paymentConfig.value.qris = form.isQris
+      paymentConfig.value.cash = form.isCash
+      paymentConfig.value.card = form.isEmoney
+      if (form.buttonColor) {
+        uiConfig.value.warnaAksen = form.buttonColor
       }
-      if (vmConf.journey) {
-        uiConfig.value.journey = vmConf.journey
+      if (form.journey) {
+        uiConfig.value.journey = form.journey
       }
-      if (vmConf.module) {
-        uiConfig.value.module = vmConf.module
+      if (form.module) {
+        uiConfig.value.module = form.module
       }
-      if (vmConf.prefixUrl) {
-        uiConfig.value.templateUrl = vmConf.prefixUrl
+      if (form.prefixUrl) {
+        uiConfig.value.templateUrl = form.prefixUrl
       }
     }
 
     if (machConf) {
-      physicalConfig.value.dropSensorEnabled = toBoolean(machConf.isDropSensor)
+      physicalConfig.value.dropSensorEnabled = machConf.isDropSensor
       if (machConf.type_machine === 'TCN22' || machConf.type_machine === 'TCN49') {
         physicalConfig.value.machineType = machConf.type_machine
       }

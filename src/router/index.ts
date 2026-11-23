@@ -1,10 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getSession } from '@/services/auth'
+import { isSubscriptionExpired } from '@/utils/subscription'
 
 declare module 'vue-router' {
   interface RouteMeta {
     /** Pages reachable without logging in. */
     public?: boolean
+    /** Still open once the subscription has ended (the renewal pages). */
+    allowExpired?: boolean
   }
 }
 
@@ -87,12 +90,47 @@ export const router = createRouter({
       path: '/subscription-end',
       name: 'subscription-end',
       component: () => import('@/pages/BillingPage.vue'),
+      meta: { allowExpired: true },
+    },
+    {
+      path: '/billing-history',
+      name: 'billing-history',
+      component: () => import('@/pages/BillingHistoryPage.vue'),
+      meta: { allowExpired: true },
     },
     {
       path: '/billing',
       name: 'billing',
       redirect: '/subscription-end',
     },
+    // Same paths as v1's "Log" group (pages/log-transaksi, pages/log-error, pages/log-perubahan).
+    {
+      path: '/log-transaksi',
+      name: 'log-transaksi',
+      component: () => import('@/pages/LogMachinesPage.vue'),
+      props: { kind: 'transaction' },
+    },
+    {
+      path: '/log-transaksi/:machine',
+      name: 'log-transaksi-machine',
+      component: () => import('@/pages/TransactionLogPage.vue'),
+      props: true,
+    },
+    {
+      path: '/log-error',
+      name: 'log-error',
+      component: () => import('@/pages/LogMachinesPage.vue'),
+      props: { kind: 'error' },
+    },
+    {
+      path: '/log-error/:machine',
+      name: 'log-error-machine',
+      component: () => import('@/pages/ErrorLogPage.vue'),
+      props: true,
+    },
+    { path: '/log-perubahan', name: 'log-perubahan', component: () => import('@/pages/ChangeLogPage.vue') },
+    // Same path as v1's "VM & Machine Config" (pages/vm-config); sidebar: Configs.
+    { path: '/vm-config', name: 'vm-config', component: () => import('@/pages/VmConfigPage.vue') },
     // Same path as v1's "Ubah Password" (pages/ganti-password/index.vue)
     {
       path: '/ganti-password',
@@ -172,6 +210,12 @@ export const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (!to.meta.public && !getSession()) return { name: 'login', query: { redirect: to.fullPath } }
-  if (to.name === 'login' && getSession()) return { path: '/' }
+  const session = getSession()
+  if (!to.meta.public && !session) return { name: 'login', query: { redirect: to.fullPath } }
+  if (to.name === 'login' && session) return { path: '/' }
+  // v1 checkLogin(): an ended subscription sends the account to the renewal page. v1 only checked on
+  // the dashboard; here every page but the billing ones is closed until it is renewed.
+  if (session && !to.meta.public && !to.meta.allowExpired && isSubscriptionExpired(session)) {
+    return { name: 'subscription-end' }
+  }
 })

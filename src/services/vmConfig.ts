@@ -1,129 +1,77 @@
+import { DEFAULT_BUTTON_COLOR, DEFAULT_FONT_COLOR } from '@/components/configs/options'
+import type { SalesMachine } from '@/types/sales'
+import type { ConfigFlag, MachineConfigForm, VmConfigForm, VmConfigRow } from '@/types/vmConfig'
 import { apiGet, apiSendJson } from './api'
-import type { VmConfig, VmMachineDetail } from '@/types/vmConfig'
 
-// In-memory fallback cache for development or when backend is temporarily offline
-const localVmConfigCache = new Map<string, Partial<VmConfig>>()
-const localMachineConfigCache = new Map<string, Partial<VmMachineDetail>>()
+export const toBoolean = (flag: unknown): boolean =>
+  flag === true || flag === 1 || flag === '1' || flag === 'true'
 
-export function toBoolean(value: unknown): boolean {
-  if (typeof value === 'boolean') return value
-  if (typeof value === 'number') return value === 1
-  if (typeof value === 'string') return value === '1' || value.toLowerCase() === 'true'
-  return false
+const isOn = (flag: ConfigFlag): boolean => toBoolean(flag)
+
+/** Every machine the account can configure (GET /vending-machines?itemPerPage=all, as v1). */
+export async function fetchConfigMachines(): Promise<SalesMachine[]> {
+  const body = await apiGet<{ data?: SalesMachine[] } | undefined>('/vending-machines?itemPerPage=all')
+  return body?.data ?? []
 }
 
 /**
- * Fetch VM configuration (QRIS, Cash, E-Money, Button Color, Journey, Module, etc.)
- * Mirrors legacy Nuxt 3: GET /config/:vmCode
+ * Kiosk settings of a machine (GET /config/:vmCode). `exists` is false when the machine has no
+ * config row yet; the form then starts empty, with v1's default colors.
  */
-export async function fetchVmConfig(code: string): Promise<VmConfig | null> {
-  const normalizedCode = code.toUpperCase().trim()
-  try {
-    const res = await apiGet<{ data?: VmConfig } | undefined>(`/config/${encodeURIComponent(normalizedCode)}`)
-    if (res?.data) {
-      localVmConfigCache.set(normalizedCode, res.data)
-      return res.data
-    }
-  } catch (err) {
-    // Graceful fallback to cache or defaults
-    console.warn(`[vmConfig] Unable to fetch /config/${normalizedCode}, using local cache/defaults:`, err)
-  }
-
-  const cached = localVmConfigCache.get(normalizedCode)
-  if (cached) {
-    return {
-      code: normalizedCode,
-      ...cached,
-    }
-  }
-
+export async function fetchVmConfig(code: string): Promise<{ exists: boolean; form: VmConfigForm }> {
+  const body = await apiGet<{ data?: VmConfigRow | null } | undefined>(`/config/${encodeURIComponent(code)}`)
+  const row = body?.data ?? null
   return {
-    code: normalizedCode,
-    isQris: true,
-    isCash: true,
-    isEmoney: true,
-    buttonColor: '#5F93EC',
-    journey: 'default',
-    module: 'standard',
+    exists: row !== null,
+    form: {
+      isIdleScreen: isOn(row?.isIdleScreen),
+      isCash: isOn(row?.isCash),
+      isQris: isOn(row?.isQris),
+      isEmoney: isOn(row?.isEmoney),
+      isVoucher: isOn(row?.isVoucher),
+      isMaintenance: isOn(row?.isMaintenance),
+      journey: row?.journey ?? '',
+      module: row?.module ?? '',
+      prefixUrl: row?.prefixUrl ?? '',
+      buttonColor: row?.buttonColor || DEFAULT_BUTTON_COLOR,
+      fontColor: row?.fontColor || DEFAULT_FONT_COLOR,
+      qrProviders: row?.qrProviders ?? '',
+      mid: row?.mid ?? '',
+      tid: row?.tid ?? '',
+      mid_emoney: row?.mid_emoney ?? '',
+      tid_emoney: row?.tid_emoney ?? '',
+    },
   }
 }
 
-/**
- * Fetch Vending Machine detail (Drop Sensor, categories, type_machine)
- * Mirrors legacy Nuxt 3: GET /vm/admin/:vmCode
- */
-export async function fetchMachineConfig(code: string): Promise<VmMachineDetail | null> {
-  const normalizedCode = code.toUpperCase().trim()
-  try {
-    const res = await apiGet<{ data?: VmMachineDetail } | undefined>(`/vm/admin/${encodeURIComponent(normalizedCode)}`)
-    if (res?.data) {
-      localMachineConfigCache.set(normalizedCode, res.data)
-      return res.data
-    }
-  } catch (err) {
-    console.warn(`[vmConfig] Unable to fetch /vm/admin/${normalizedCode}, using local cache/defaults:`, err)
-  }
-
-  const cached = localMachineConfigCache.get(normalizedCode)
-  if (cached) {
-    return {
-      code: normalizedCode,
-      ...cached,
-    }
-  }
-
+/** Hardware settings of a machine (GET /vm/admin/:code; 204 when the machine is unknown). */
+export async function fetchMachineConfig(code: string): Promise<MachineConfigForm> {
+  const body = await apiGet<{ data?: { categories?: string | null; isDropSensor?: ConfigFlag; type_machine?: string } | null } | undefined>(
+    `/vm/admin/${encodeURIComponent(code)}`,
+  )
   return {
-    code: normalizedCode,
-    isDropSensor: true,
-    type_machine: 'TCN22',
+    categories: body?.data?.categories ?? '',
+    isDropSensor: isOn(body?.data?.isDropSensor),
+    type_machine: body?.data?.type_machine || 'TCN22',
   }
+}
+
+/** PUT /config: creates or updates the machine's config row. */
+export async function saveVmConfig(code: string, form: Partial<VmConfigForm>): Promise<void> {
+  await apiSendJson('/config', 'PUT', { configData: { code, ...form } })
 }
 
 /**
- * Save VM Configuration (QRIS, Cash, E-Money, Color, Journey, etc.)
- * Mirrors legacy Nuxt 3: PUT /config with body { configData: { ...config, code } }
+ * PUT /vm/config. The endpoint writes every column it receives onto vending_machines, so only the
+ * edited fields are sent: v1 sent the whole row it had loaded, overwriting values the machine
+ * had reported since (last_online, cash_remain, description, …) with stale ones.
  */
-export async function updateVmConfig(code: string, config: Partial<VmConfig>): Promise<void> {
-  const normalizedCode = code.toUpperCase().trim()
-  const payload = {
-    ...config,
-    code: normalizedCode,
-  }
-
-  // Update local cache immediately
-  localVmConfigCache.set(normalizedCode, {
-    ...(localVmConfigCache.get(normalizedCode) || {}),
-    ...payload,
+export async function saveMachineConfig(code: string, form: Partial<MachineConfigForm>): Promise<void> {
+  await apiSendJson('/vm/config', 'PUT', {
+    configData: { code, ...form },
   })
-
-  try {
-    await apiSendJson<{ data: string }>('/config', 'PUT', { configData: payload })
-  } catch (err) {
-    console.warn(`[vmConfig] Backend PUT /config failed, cached locally:`, err)
-    // If running in local demo without backend, cache update is preserved
-  }
 }
 
-/**
- * Save Machine Configuration (Drop Sensor, type_machine, categories)
- * Mirrors legacy Nuxt 3: PUT /vm/config with body { configData: { ...machine, code } }
- */
-export async function updateMachineConfig(code: string, machine: Partial<VmMachineDetail>): Promise<void> {
-  const normalizedCode = code.toUpperCase().trim()
-  const payload = {
-    ...machine,
-    code: normalizedCode,
-  }
-
-  // Update local cache immediately
-  localMachineConfigCache.set(normalizedCode, {
-    ...(localMachineConfigCache.get(normalizedCode) || {}),
-    ...payload,
-  })
-
-  try {
-    await apiSendJson<{ data: string }>('/vm/config', 'PUT', { configData: payload })
-  } catch (err) {
-    console.warn(`[vmConfig] Backend PUT /vm/config failed, cached locally:`, err)
-  }
-}
+/** Backward compatibility aliases for LivePreviewPage */
+export const updateVmConfig = saveVmConfig
+export const updateMachineConfig = saveMachineConfig

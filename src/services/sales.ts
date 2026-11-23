@@ -1,14 +1,16 @@
 import type { Pagination } from '@/types/product'
 import type {
   RecapSales,
+  RevenueTargetProgress,
   SaleRecord,
   SaleSortKey,
+  SaveRevenueTargetPayload,
   SalesChannel,
   SalesFilter,
   SalesMachine,
   SoldProduct,
 } from '@/types/sales'
-import { ApiError, apiDownload, apiGet } from './api'
+import { ApiError, apiDownload, apiGet, apiSendJson } from './api'
 
 /** Month-to-date / week-to-date / today sales for the logged-in account. */
 export async function fetchRecapSales(): Promise<RecapSales> {
@@ -16,6 +18,17 @@ export async function fetchRecapSales(): Promise<RecapSales> {
   // The backend answers { data: null } when its query fails.
   if (!body.data) throw new ApiError(500, 'Data penjualan tidak tersedia saat ini.')
   return body.data
+}
+
+/** This month's revenue target and progress for the client (sub accounts get their parent's). */
+export async function fetchRevenueTarget(): Promise<RevenueTargetProgress | null> {
+  const body = await apiGet<{ data?: RevenueTargetProgress } | undefined>('/client/revenue-target')
+  return body?.data ?? null
+}
+
+/** Sets the client's target for a month. Main clients only; the backend answers 403 for sub accounts. */
+export async function saveRevenueTarget(payload: SaveRevenueTargetPayload): Promise<void> {
+  await apiSendJson<unknown>('/client/revenue-target', 'POST', payload)
 }
 
 export interface SalesMachineQuery {

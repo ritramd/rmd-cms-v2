@@ -6,6 +6,8 @@ import checkedIcon from '@/assets/form/checkbox-checked.svg'
 defineProps<{
   label: string
   indeterminate?: boolean
+  /** Shown but not changeable (e.g. a machine that must be part of a payment). */
+  disabled?: boolean
 }>()
 
 const checked = defineModel<boolean>({ default: false })
@@ -18,7 +20,8 @@ const checked = defineModel<boolean>({ default: false })
       type="checkbox"
       :aria-label="label"
       :indeterminate="indeterminate"
-      class="peer size-4 cursor-pointer appearance-none rounded border border-line-strong bg-surface transition-colors indeterminate:border-primary-hover indeterminate:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-hover"
+      :disabled="disabled"
+      class="peer size-4 cursor-pointer appearance-none rounded border border-line-strong bg-surface transition-colors indeterminate:border-primary-hover indeterminate:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
     />
     <img
       :src="checkedIcon"

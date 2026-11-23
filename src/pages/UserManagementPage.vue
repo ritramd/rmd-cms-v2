@@ -45,7 +45,6 @@ const isSubmitting = ref(false)
 
 // Query params & filter state
 const searchQuery = ref((route.query.search as string) || '')
-const headerSearch = ref('')
 const pageSize = ref(Number(route.query.itemPerPage) || 10)
 const page = ref(Number(route.query.page) || 1)
 const sortField = ref<UserSortField | null>((route.query.sortField as UserSortField) || null)
@@ -453,11 +452,7 @@ async function handleDeleteUserConfirm(targetUser: UserAndVending) {
   <DashboardLayout title="Daftar User" subtitle="Manage User">
     <template #header>
       <!-- Page Header matching Figma 1097:28207 -->
-      <PageHeader
-        title="Daftar User"
-        search-placeholder="Cari mesin..."
-        v-model:search="headerSearch"
-      >
+      <PageHeader title="Daftar User">
         <!-- Filter & Action Row from Figma 1097:28217 -->
         <div class="flex flex-wrap items-center justify-between gap-4 w-full">
           <!-- Search input box (480px width) -->
@@ -468,7 +463,8 @@ async function handleDeleteUserConfirm(targetUser: UserAndVending) {
             <input
               v-model="searchQuery"
               type="search"
-              placeholder="Cari produk apa"
+              placeholder="Cari nama, email, atau role…"
+              aria-label="Cari user"
               class="w-full rounded-lg border border-line bg-surface pl-10 pr-4 py-2.5 text-sm text-ink-strong shadow-xs placeholder:text-ink-placeholder focus:border-brand focus:outline-none transition-colors"
             />
           </div>

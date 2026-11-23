@@ -1,4 +1,7 @@
 import type { IconName, NavIconName } from '@/assets/icons'
+import type { User } from '@/types/user'
+import { canSeeBilling, canSeeLog, canSeeVmConfig } from '@/utils/access'
+import { subscriptionBadge, type SubscriptionBadge } from '@/utils/subscription'
 
 // Sidebar from the dashboard design (1097:42249). Paths reuse rmd-cms v1 routes (utils/menuItems.ts).
 
@@ -6,13 +9,24 @@ export interface NavLink {
   label: string
   icon: NavIconName
   to: string
+  /** Shown only when this returns true (v1 menu `condition`); always shown when absent. */
+  visible?: (user: User | null) => boolean
 }
 
 export interface NavGroup {
   label: string
   icon: IconName
   to?: string
-  children: { label: string; to: string }[]
+  children: NavChild[]
+  /** Shown only when this returns true (v1 menu `condition`); always shown when absent. */
+  visible?: (user: User | null) => boolean
+}
+
+export interface NavChild {
+  label: string
+  to: string
+  /** Optional status pill after the label, e.g. an ended subscription. */
+  badge?: (user: User | null) => SubscriptionBadge | null
 }
 
 export type NavEntry = NavLink | NavGroup | 'divider'
@@ -40,7 +54,7 @@ export const navigation: NavEntry[] = [
       { label: 'Vending Sales Digital', to: '/sales-digital' },
     ],
   },
-  { label: 'Configs', icon: 'tune', to: '/vm-config' },
+  { label: 'Konfigurasi Mesin', icon: 'tune', to: '/vm-config', visible: canSeeVmConfig },
   // Figma: Stok group (1097:34077). Same paths as v1.
   {
     label: 'Stok',
@@ -70,8 +84,30 @@ export const navigation: NavEntry[] = [
       { label: 'Almost Expired Item', to: '/almost-expired' },
     ],
   },
-  { label: 'Log', icon: 'history', to: '/log-transaksi' },
-  { label: 'Billing', icon: 'receipt-long', to: '/subscription-end' },
+  // Same paths as v1's "Log" group (utils/menuItems.ts).
+  {
+    label: 'Log',
+    icon: 'history',
+    to: '/log-transaksi',
+    visible: canSeeLog,
+    children: [
+      { label: 'Log Transaksi', to: '/log-transaksi' },
+      { label: 'Log Error', to: '/log-error' },
+      { label: 'Log Perubahan', to: '/log-perubahan' },
+    ],
+  },
+  // v1 "Billing" → "Pembayaran Tagihan" (/subscription-end); the history was v1's dev-only
+  // "Dashboard Billing History", here scoped to the client's own renewals.
+  {
+    label: 'Billing',
+    icon: 'receipt-long',
+    to: '/subscription-end',
+    visible: canSeeBilling,
+    children: [
+      { label: 'Perpanjang Subscription', to: '/subscription-end', badge: subscriptionBadge },
+      { label: 'Riwayat Perpanjangan', to: '/billing-history' },
+    ],
+  },
   {
     label: 'User Management',
     icon: 'manage-accounts',

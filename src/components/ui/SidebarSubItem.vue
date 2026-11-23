@@ -6,7 +6,14 @@ defineProps<{
   label: string
   to?: RouteLocationRaw
   active?: boolean
+  /** Not in Figma: small status pill after the label (StatusBadge colours). */
+  badge?: { label: string; tone: 'danger' | 'warning' } | null
 }>()
+
+const BADGE_TONES = {
+  danger: 'bg-danger-soft text-danger-strong',
+  warning: 'bg-warning-soft text-warning-strong',
+} as const
 </script>
 
 <template>
@@ -23,6 +30,14 @@ defineProps<{
     "
   >
     <span class="size-1.5 shrink-0 rounded-full" :class="active ? 'bg-primary' : 'bg-bullet'" />
-    <span class="truncate">{{ label }}</span>
+    <!-- Wraps rather than truncates: "Perpanjang Subscription" plus its badge is wider than the sidebar. -->
+    <span class="min-w-0 leading-snug break-words">{{ label }}</span>
+    <span
+      v-if="badge"
+      class="ml-auto shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold whitespace-nowrap"
+      :class="BADGE_TONES[badge.tone]"
+    >
+      {{ badge.label }}
+    </span>
   </component>
 </template>

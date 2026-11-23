@@ -12,16 +12,26 @@ const props = defineProps<{
   periodLabel?: string
   /** Optional: the progress bar and "Target" caption only show when a target is known. */
   target?: number
+  /** The target is the suggested Rp 10 jt × machines, not one the client saved. */
+  targetIsDefault?: boolean
+  /** Main clients can click the target to change it. */
+  targetEditable?: boolean
   /** Optional: change vs. the comparison period, in percent. */
   growth?: number
+  /** What `growth` compares against, e.g. "Dibanding 1–21 Okt 2026"; shown as the badge's tooltip. */
+  growthCompare?: string
 }>()
 
 defineEmits<{
   retry: []
+  editTarget: []
 }>()
 
 const progress = computed(() =>
   props.target && props.revenue !== null ? Math.min(Math.max(props.revenue / props.target, 0), 1) * 100 : 0,
+)
+const targetLabel = computed(() =>
+  props.target ? `Target${props.targetIsDefault ? ' default' : ''}: ${formatRupiahCompact(props.target)}` : '',
 )
 const growthLabel = computed(() =>
   props.growth === undefined
@@ -60,16 +70,32 @@ const growthLabel = computed(() =>
       <span
         v-if="growthLabel"
         class="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-sm font-medium backdrop-blur-[2px]"
+        :title="growthCompare"
       >
-        <AppIcon name="trending-up" class="my-[3px]" />
+        <!-- The design only has a rising arrow; mirrored for a decline. -->
+        <span class="my-[3px] flex" :class="growth !== undefined && growth < 0 && '-scale-y-100'">
+          <AppIcon name="trending-up" />
+        </span>
         {{ growthLabel }}
+        <span v-if="growthCompare" class="sr-only">{{ growthCompare }}</span>
       </span>
     </div>
 
     <div v-if="periodLabel || target" class="mt-auto flex flex-col gap-2">
       <div class="flex justify-between gap-4 text-xs font-medium text-success-soft">
         <span>{{ periodLabel }}</span>
-        <span v-if="target">Target: {{ formatRupiahCompact(target) }}</span>
+        <button
+          v-if="target && targetEditable"
+          type="button"
+          class="-mx-1 -my-0.5 inline-flex cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white"
+          title="Klik untuk mengubah target"
+          :aria-label="`${targetLabel}. Ubah target pendapatan`"
+          @click="$emit('editTarget')"
+        >
+          {{ targetLabel }}
+          <AppIcon name="line-pencil" class="size-3.5 brightness-0 invert" />
+        </button>
+        <span v-else-if="target">{{ targetLabel }}</span>
       </div>
       <div
         v-if="target"
