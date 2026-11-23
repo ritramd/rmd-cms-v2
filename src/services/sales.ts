@@ -1,6 +1,7 @@
 import type { Pagination } from '@/types/product'
 import type {
   RecapSales,
+  RevenueTargetProgress,
   SaleRecord,
   SaleSortKey,
   SalesChannel,
@@ -16,6 +17,12 @@ export async function fetchRecapSales(): Promise<RecapSales> {
   // The backend answers { data: null } when its query fails.
   if (!body.data) throw new ApiError(500, 'Data penjualan tidak tersedia saat ini.')
   return body.data
+}
+
+/** This month's revenue target and progress for the client (sub accounts get their parent's). */
+export async function fetchRevenueTarget(): Promise<RevenueTargetProgress | null> {
+  const body = await apiGet<{ data?: RevenueTargetProgress } | undefined>('/client/revenue-target')
+  return body?.data ?? null
 }
 
 export interface SalesMachineQuery {

@@ -8,7 +8,7 @@ import VendingStatusCard from '@/components/dashboard/VendingStatusCard.vue'
 import { useAsyncData } from '@/composables/useAsyncData'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import { getSession } from '@/services/auth'
-import { fetchRecapSales } from '@/services/sales'
+import { fetchRecapSales, fetchRevenueTarget } from '@/services/sales'
 import { fetchVendingMachines, fetchVendingStatus } from '@/services/vending'
 import type { AttentionItem } from '@/types/dashboard'
 import type { MachineFilterOptions, VendingMachine } from '@/types/vending'
@@ -25,6 +25,7 @@ const filters = ref<MachineFilterOptions>({
 const greeting = `Selamat datang kembali, ${getSession()?.name ?? 'Admin'}.`
 
 const recap = useAsyncData(fetchRecapSales, 'Gagal memuat total pendapatan.') // GET /recap-sales
+const revenueTarget = useAsyncData(fetchRevenueTarget, 'Gagal memuat target pendapatan.') // GET /client/revenue-target
 const status = useAsyncData(fetchVendingStatus, 'Gagal memuat status mesin.') // GET /status-vending/resume
 const list = useAsyncData(fetchVendingMachines, 'Gagal memuat daftar mesin.') // GET /status-vending
 
@@ -40,6 +41,25 @@ const DEFAULT_DASHBOARD_MACHINES: VendingMachine[] = [
 const revenuePeriod = computed(() => {
   const [start, end] = recap.data.value?.time.monthlySales.split(' sampai ') ?? []
   return start && end ? `Bulan ini · ${formatDateRange(start, end)}` : 'Bulan ini'
+})
+
+// Real figures whenever /recap-sales answered; the Figma sample values only for the demo dashboard.
+const revenueGrowth = computed(() => {
+  if (recap.data.value) return recap.data.value.growth?.monthlySales.percentage
+  return isDefaultMachines.value ? 12.5 : undefined
+})
+
+/** "2026-10-01 00:00:00 sampai 2026-10-21 14:30:00" → "Dibanding 1–21 Okt 2026" */
+const growthCompare = computed(() => {
+  const period = recap.data.value?.growth?.monthlySales.previousPeriod
+  const [start, end] = period?.split(' sampai ').map((part) => part.slice(0, 10)) ?? []
+  return start && end ? `Dibanding ${formatDateRange(start, end)}` : undefined
+})
+
+/** Shown only once the client has set a target for the month (0 means none). */
+const revenueTargetAmount = computed(() => {
+  if (revenueTarget.data.value) return revenueTarget.data.value.target_amount || undefined
+  return isDefaultMachines.value && !recap.data.value ? 150000000 : undefined
 })
 
 const machines = computed(() => {
@@ -118,15 +138,16 @@ function exportMachines() {
 <template>
   <DashboardLayout v-model:search="search" title="Ringkasan Bisnis" :subtitle="greeting">
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-      <!-- /recap-sales has no target or growth figures, so the card shows the period instead. -->
+      <!-- Growth from /recap-sales (month to date vs. the same days last month); target from /client/revenue-target. -->
       <RevenueCard
         class="md:col-span-2 xl:col-span-2"
         :revenue="recap.data.value?.total.monthlySales ?? (isDefaultMachines ? 124500000 : null)"
         :loading="recap.loading.value"
         :error="recap.error.value"
         :period-label="revenuePeriod"
-        :target="isDefaultMachines ? 150000000 : undefined"
-        :growth="isDefaultMachines ? 12.5 : undefined"
+        :target="revenueTargetAmount"
+        :growth="revenueGrowth"
+        :growth-compare="growthCompare"
         @retry="recap.reload"
       />
       <VendingStatusCard

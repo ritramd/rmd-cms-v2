@@ -14,6 +14,8 @@ const props = defineProps<{
   target?: number
   /** Optional: change vs. the comparison period, in percent. */
   growth?: number
+  /** What `growth` compares against, e.g. "Dibanding 1–21 Okt 2026"; shown as the badge's tooltip. */
+  growthCompare?: string
 }>()
 
 defineEmits<{
@@ -60,9 +62,14 @@ const growthLabel = computed(() =>
       <span
         v-if="growthLabel"
         class="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-sm font-medium backdrop-blur-[2px]"
+        :title="growthCompare"
       >
-        <AppIcon name="trending-up" class="my-[3px]" />
+        <!-- The design only has a rising arrow; mirrored for a decline. -->
+        <span class="my-[3px] flex" :class="growth !== undefined && growth < 0 && '-scale-y-100'">
+          <AppIcon name="trending-up" />
+        </span>
         {{ growthLabel }}
+        <span v-if="growthCompare" class="sr-only">{{ growthCompare }}</span>
       </span>
     </div>
 
