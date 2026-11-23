@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// Figma: aside.w-20 (1097:42242)
+// Figma: aside.w-20 (1097:42242) and Live Preview header (1097:21688 / 1097:21476)
 import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import SidebarNavGroup from '@/components/layout/SidebarNavGroup.vue'
 import SidebarNavItem from '@/components/ui/SidebarNavItem.vue'
 import SidebarSubItem from '@/components/ui/SidebarSubItem.vue'
@@ -9,14 +10,28 @@ import { useOnboarding } from '@/composables/useOnboarding'
 import { isNavGroup, navigation, type NavGroup } from '@/config/navigation'
 
 const route = useRoute()
+const router = useRouter()
 const { currentStep } = useOnboarding()
 
 const navPaths = navigation.flatMap((entry) =>
   entry === 'divider' ? [] : isNavGroup(entry) ? entry.children.map((c) => c.to) : [entry.to],
 )
 
+// When in Live Preview mode, sidebar renders TopNavBar with back button
+const isLivePreviewHeader = computed(() => route.path === '/live-preview')
+
 // The most specific matching link wins, so /product/categories highlights "Kategori Produk", not "Atur Produk".
+// When Live Preview entry point is from Daftar Vending, selected submenu remains /kelola-vending (Figma 1097:21680)
 const activePath = computed(() => {
+  if (
+    route.path === '/live-preview' &&
+    (route.query.from === 'daftar-vending' ||
+      route.query.from === 'kelola-vending' ||
+      route.query.entry === 'daftar-vending' ||
+      (route.query.machine && route.query.from !== 'sidebar'))
+  ) {
+    return '/kelola-vending'
+  }
   const matches = navPaths.filter((path) =>
     path === '/' ? route.path === '/' : route.path === path || route.path.startsWith(`${path}/`),
   )
@@ -27,11 +42,37 @@ function isActive(path: string) {
   return activePath.value === path
 }
 
+function handleBack() {
+  if (route.query.from === 'daftar-vending' || route.query.from === 'kelola-vending' || route.path === '/live-preview') {
+    void router.push('/kelola-vending')
+  } else if (window.history.length > 1) {
+    router.back()
+  } else {
+    void router.push('/kelola-vending')
+  }
+}
+
 // Groups start expanded when one of their pages is open.
 const openGroups = ref<Record<string, boolean>>(
   Object.fromEntries(
-    navigation.filter(isNavGroup).map((group: NavGroup) => [group.label, group.children.some((c) => isActive(c.to))]),
+    navigation.filter(isNavGroup).map((group: NavGroup) => [
+      group.label,
+      group.children.some((c) => isActive(c.to)) ||
+        (group.label === 'Kelola Vending' && route.path === '/live-preview'),
+    ]),
   ),
+)
+
+watch(
+  activePath,
+  () => {
+    navigation.filter(isNavGroup).forEach((group) => {
+      if (group.children.some((c) => isActive(c.to))) {
+        openGroups.value[group.label] = true
+      }
+    })
+  },
+  { immediate: true },
 )
 
 watch(
@@ -47,7 +88,28 @@ watch(
 
 <template>
   <aside class="flex h-full w-64 flex-col border-r border-line bg-surface">
-    <div class="flex h-20 shrink-0 items-center gap-3 border-b border-line-soft px-8">
+    <!-- Live Preview TopNavBar (Figma 1097:21688 / 1097:21476) -->
+    <div
+      v-if="isLivePreviewHeader"
+      class="flex h-[57px] shrink-0 items-center gap-4 border-b border-line-soft px-6 bg-surface"
+    >
+      <button
+        type="button"
+        class="flex size-8 items-center justify-center rounded-full text-ink hover:bg-surface-muted transition cursor-pointer"
+        title="Kembali ke Daftar Vending"
+        @click="handleBack"
+      >
+        <AppIcon name="arrow-back" class="size-5 text-ink-muted hover:text-ink-strong" />
+      </button>
+      <div class="h-6 w-px bg-line shrink-0" />
+      <h2 class="text-base font-bold text-ink-strong truncate">Live Preview</h2>
+    </div>
+
+    <!-- Standard Brand Header -->
+    <div
+      v-else
+      class="flex h-20 shrink-0 items-center gap-3 border-b border-line-soft px-8"
+    >
       <span
         class="flex size-8 items-center justify-center rounded-lg bg-primary text-lg font-bold text-white drop-shadow-[0_0_10px_rgb(100_149_237/0.3)]"
         aria-hidden="true"
