@@ -52,6 +52,8 @@ function filterParams(filter: SalesFilter): URLSearchParams {
   if (filter.startDate) params.set('startDate', filter.startDate)
   if (filter.endDate) params.set('endDate', filter.endDate)
   if (filter.productIds?.length) params.set('productId', filter.productIds.join(','))
+  if (filter.sku) params.set('sku', filter.sku)
+  if (filter.slot) params.set('slot', filter.slot)
   return params
 }
 
