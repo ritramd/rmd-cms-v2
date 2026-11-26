@@ -23,6 +23,13 @@ export const router = createRouter({
       name: 'product-categories',
       component: () => import('@/pages/ProductCategoryPage.vue'),
     },
+    // Same paths as v1; sidebar: Penjualan → Rekap Penjualan / Rekap Penjualan per Produk.
+    { path: '/sales-recap', name: 'sales-recap', component: () => import('@/pages/SalesRecapPage.vue') },
+    {
+      path: '/sales-recap-product',
+      name: 'sales-recap-product',
+      component: () => import('@/pages/ProductRecapPage.vue'),
+    },
     // Same paths as v1; sidebar: Penjualan → Vending Sales / Vending Sales Digital.
     {
       path: '/vending-sales',
