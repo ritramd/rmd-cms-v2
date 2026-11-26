@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Figma: 5.1-D-Daftar Vending (1097:20872)
+// Figma: 5.1-D-Daftar Vending (1097:20872). Figma's "+ Tambah Mesin" is left out: adding machines is
+// admin-only (v1 "Tambah Vending" shows for ops/dev only), not for clients.
 import AppButton from '@/components/ui/AppButton.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import type { KelolaVendingMachine } from '@/types/kelolaVending'
@@ -14,7 +15,6 @@ const emit = defineEmits<{
   'update:selectedMachine': [value: string]
   'update:search': [value: string]
   select: []
-  addMachine: []
 }>()
 </script>
 
@@ -43,7 +43,7 @@ const emit = defineEmits<{
       </AppButton>
     </div>
 
-    <!-- Right controls: Search input & + Tambah Mesin button -->
+    <!-- Right controls: search input -->
     <div class="flex flex-wrap items-center gap-3">
       <div class="relative min-w-[240px] sm:min-w-[280px]">
         <input
@@ -57,11 +57,6 @@ const emit = defineEmits<{
           <AppIcon name="line-search" class="size-4" />
         </span>
       </div>
-
-      <AppButton variant="primary" class="gap-1.5" @click="emit('addMachine')">
-        <AppIcon name="add" class="size-4" />
-        <span>Tambah Mesin</span>
-      </AppButton>
     </div>
   </div>
 </template>
