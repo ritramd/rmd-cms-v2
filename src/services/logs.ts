@@ -2,23 +2,26 @@ import type { Pagination } from '@/types/product'
 import type {
   ChangeLogFilter,
   ChangeLogRecord,
+  ErrorLogFilter,
   ErrorLogRecord,
   LogDateRange,
   LogPageQuery,
+  TransactionLogFilter,
   TransactionLogRecord,
 } from '@/types/logs'
 import { apiDownload, apiGet } from './api'
 
 const today = () => new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD in local time
 
-function rangeParams(range: LogDateRange): URLSearchParams {
+function rangeParams(range: LogDateRange & { status?: string }): URLSearchParams {
   const params = new URLSearchParams()
   if (range.startDate) params.set('startDate', range.startDate)
   if (range.endDate) params.set('endDate', range.endDate)
+  if (range.status) params.set('status', range.status)
   return params
 }
 
-function pageParams(query: LogPageQuery): URLSearchParams {
+function pageParams(query: LogPageQuery & { status?: string }): URLSearchParams {
   const params = rangeParams(query)
   params.set('page', String(query.page))
   params.set('itemPerPage', String(query.itemPerPage))
@@ -33,7 +36,7 @@ const emptyPage = (itemPerPage: number): Pagination => ({ page: 1, itemPerPage, 
  */
 export async function fetchTransactionLog(
   code: string,
-  query: LogPageQuery,
+  query: LogPageQuery & TransactionLogFilter,
 ): Promise<{ data: TransactionLogRecord[]; pagination: Pagination }> {
   const body = await apiGet<{ data: TransactionLogRecord[]; pagination: Pagination } | undefined>(
     `/transaction-log/${encodeURIComponent(code)}?${pageParams(query)}`,
@@ -41,11 +44,11 @@ export async function fetchTransactionLog(
   return { data: body?.data ?? [], pagination: body?.pagination ?? emptyPage(query.itemPerPage) }
 }
 
-/** The machine's transaction log as .xlsx (GET /transaction-log/download?machines=<code>). */
-export function downloadTransactionLog(code: string, range: LogDateRange): Promise<void> {
-  const params = rangeParams(range)
+/** The machine's transaction log as .xlsx (GET /transaction-log/download?machines=<code>), same filters as the page. */
+export function downloadTransactionLog(code: string, filter: TransactionLogFilter): Promise<void> {
+  const params = rangeParams(filter)
   params.set('machines', code)
-  return apiDownload(`/transaction-log/download?${params}`, `log-transaksi-${code}-${today()}.xlsx`)
+  return apiDownload(`/transaction-log/download?${params}`, `log_transaksi_${code}_${today()}.xlsx`)
 }
 
 /**
@@ -55,12 +58,19 @@ export function downloadTransactionLog(code: string, range: LogDateRange): Promi
  */
 export async function fetchErrorLog(
   code: string,
-  query: LogPageQuery,
+  query: LogPageQuery & ErrorLogFilter,
 ): Promise<{ data: ErrorLogRecord[]; pagination: Pagination | null }> {
   const body = await apiGet<{ data?: ErrorLogRecord[]; pagination?: Pagination } | undefined>(
     `/log-error/${encodeURIComponent(code)}?${pageParams(query)}`,
   )
   return { data: body?.data ?? [], pagination: body ? (body.pagination ?? null) : emptyPage(query.itemPerPage) }
+}
+
+/** The machine's error log as .xlsx (GET /log-error/download?machines=<code>), same filters as the page. */
+export function downloadErrorLog(code: string, filter: ErrorLogFilter): Promise<void> {
+  const params = rangeParams(filter)
+  params.set('machines', code)
+  return apiDownload(`/log-error/download?${params}`, `log_error_${code}_${today()}.xlsx`)
 }
 
 function changeLogParams(filter: ChangeLogFilter): URLSearchParams {

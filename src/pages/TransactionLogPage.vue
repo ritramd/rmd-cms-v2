@@ -6,6 +6,7 @@ import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import LogDownloadButton from '@/components/log/LogDownloadButton.vue'
+import LogFilterSelect from '@/components/log/LogFilterSelect.vue'
 import LogNotice from '@/components/log/LogNotice.vue'
 import TransactionLogTable from '@/components/log/TransactionLogTable.vue'
 import DateField from '@/components/sales/DateField.vue'
@@ -16,7 +17,7 @@ import { ApiError } from '@/services/api'
 import { getSession } from '@/services/auth'
 import { downloadTransactionLog, fetchTransactionLog } from '@/services/logs'
 import { fetchMachineName } from '@/services/sales'
-import type { TransactionLogRecord } from '@/types/logs'
+import type { TransactionLogRecord, TransactionLogStatus } from '@/types/logs'
 import type { Pagination } from '@/types/product'
 import { hasAnyPackage } from '@/utils/access'
 
@@ -29,7 +30,21 @@ const route = useRoute()
 const router = useRouter()
 const hasAccess = hasAnyPackage(getSession())
 
+// Labels as TransactionStatusBadge shows them; "Gagal" also covers "failed" on the backend.
+const STATUS_OPTIONS: { label: string; value: TransactionLogStatus | '' }[] = [
+  { label: 'Semua Status', value: '' },
+  { label: 'Dimulai', value: 'initiated' },
+  { label: 'Menunggu', value: 'pending' },
+  { label: 'Kedaluwarsa', value: 'expire' },
+  { label: 'Gagal', value: 'failure' },
+  { label: 'Ditolak', value: 'deny' },
+  { label: 'Dibatalkan', value: 'cancel' },
+  { label: 'Refund', value: 'refund' },
+]
+
 const queryText = (key: string) => (typeof route.query[key] === 'string' ? (route.query[key] as string) : '')
+const queryStatus = STATUS_OPTIONS.find((o) => o.value && o.value === queryText('status'))?.value ?? ''
+const status = ref<TransactionLogStatus | ''>(queryStatus)
 const startDate = ref(queryText('startDate'))
 const endDate = ref(queryText('endDate'))
 const page = ref(Number(queryText('page')) || 1)
@@ -47,10 +62,11 @@ const rangeError = computed(() =>
     ? 'Tanggal akhir tidak boleh sebelum tanggal awal.'
     : null,
 )
-const hasFilters = computed(() => Boolean(startDate.value || endDate.value))
+const hasFilters = computed(() => Boolean(status.value || startDate.value || endDate.value))
 
 function syncQuery() {
   const query: Record<string, string> = {}
+  if (status.value) query.status = status.value
   if (startDate.value) query.startDate = startDate.value
   if (endDate.value) query.endDate = endDate.value
   if (page.value !== 1) query.page = String(page.value)
@@ -74,6 +90,7 @@ async function load() {
       itemPerPage: pageSize.value,
       startDate: startDate.value,
       endDate: endDate.value,
+      status: status.value || undefined,
     })
     if (id !== requestId) return // a newer request superseded this one
     rows.value = result.data
@@ -92,7 +109,7 @@ function reloadFromFirstPage() {
 }
 
 // Filters apply as soon as they change, like the other v2 pages (v1 had a "Terapkan" button).
-watch([startDate, endDate, pageSize], reloadFromFirstPage)
+watch([status, startDate, endDate, pageSize], reloadFromFirstPage)
 watch(page, () => void load())
 
 onMounted(() => {
@@ -104,6 +121,7 @@ onMounted(() => {
 })
 
 function resetFilters() {
+  status.value = ''
   startDate.value = ''
   endDate.value = ''
 }
@@ -116,7 +134,11 @@ async function download() {
   }
   downloading.value = true
   try {
-    await downloadTransactionLog(props.machine, { startDate: startDate.value, endDate: endDate.value })
+    await downloadTransactionLog(props.machine, {
+      startDate: startDate.value,
+      endDate: endDate.value,
+      status: status.value || undefined,
+    })
   } catch (err) {
     toast.value = err instanceof ApiError ? err.message : 'Gagal mengunduh log transaksi.'
   } finally {
@@ -127,7 +149,7 @@ async function download() {
 const title = computed(() => `Log Transaksi ${machineName.value ?? props.machine}`)
 const emptyText = computed(() =>
   hasFilters.value
-    ? 'Tidak ada transaksi gagal atau tertunda pada rentang tanggal ini.'
+    ? 'Tidak ada transaksi yang cocok dengan filter.'
     : 'Belum ada transaksi gagal atau tertunda di mesin ini.',
 )
 </script>
@@ -137,6 +159,7 @@ const emptyText = computed(() =>
     <template #header>
       <PageHeader :title="title">
         <div v-if="hasAccess" class="flex flex-wrap items-end gap-6 lg:flex-nowrap">
+          <LogFilterSelect v-model="status" label="Status" :options="STATUS_OPTIONS" />
           <div class="flex flex-wrap gap-6 sm:flex-nowrap">
             <DateField v-model="startDate" label="Tanggal Awal" :max="endDate || undefined" />
             <DateField v-model="endDate" label="Tanggal Akhir" :min="startDate || undefined" />
