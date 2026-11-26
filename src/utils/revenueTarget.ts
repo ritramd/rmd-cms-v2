@@ -3,6 +3,9 @@
 /** Suggested target for a month without one: Rp 10 jt for every machine the client runs. */
 export const TARGET_PER_MACHINE = 10_000_000
 
+/** Targets under this need a second confirmation, to catch a mistyped amount (a missing zero or two). */
+export const LOW_TARGET_THRESHOLD = 10_000_000
+
 export function defaultRevenueTarget(machineCount: number): number {
   return TARGET_PER_MACHINE * Math.max(1, machineCount)
 }

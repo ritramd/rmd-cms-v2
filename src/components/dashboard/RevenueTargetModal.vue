@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // Not in Figma: opened from the "Target" figure on the Total Pendapatan card (1097:42296). Same form
 // pieces as Ganti Password (1097:41893). The page saves; this only collects a whole-rupiah amount.
+// A target under Rp 10 jt asks a second time before it is sent, since that is usually a typo.
 import { computed, ref, watch } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import { formatCurrencyInput, formatRupiah, parseCurrencyInput } from '@/utils/format'
-import { TARGET_PER_MACHINE } from '@/utils/revenueTarget'
+import { LOW_TARGET_THRESHOLD, TARGET_PER_MACHINE } from '@/utils/revenueTarget'
 
 const props = defineProps<{
   open: boolean
@@ -31,6 +32,8 @@ const MAX_TARGET = 999_999_999_999_999
 
 const display = ref('')
 const localError = ref<string | null>(null)
+/** Amount waiting for the second confirmation; null while editing. */
+const confirmAmount = ref<number | null>(null)
 
 watch(
   () => props.open,
@@ -38,6 +41,14 @@ watch(
     if (!open) return
     display.value = formatCurrencyInput(props.current)
     localError.value = null
+    confirmAmount.value = null
+  },
+)
+// A save that fails goes back to the form, where the page's error shows.
+watch(
+  () => props.error,
+  (error) => {
+    if (error) confirmAmount.value = null
   },
 )
 
@@ -49,6 +60,7 @@ const defaultHint = computed(
 )
 
 function onInput(event: Event) {
+  confirmAmount.value = null
   const input = event.target as HTMLInputElement
   display.value = formatCurrencyInput(parseCurrencyInput(input.value))
   // Keep the caret at the end after regrouping the thousands.
@@ -64,6 +76,10 @@ function onSubmit() {
   }
   if (amount > MAX_TARGET) {
     localError.value = 'Nominal target terlalu besar.'
+    return
+  }
+  if (amount < LOW_TARGET_THRESHOLD && confirmAmount.value !== amount) {
+    confirmAmount.value = amount
     return
   }
   emit('submit', amount)
@@ -106,10 +122,20 @@ function onSubmit() {
         <p id="revenue-target-hint" class="text-xs text-ink-subtle">{{ defaultHint }}</p>
       </div>
 
+      <div
+        v-if="confirmAmount !== null"
+        role="alert"
+        class="flex flex-col gap-1 rounded-lg bg-warning-soft p-3 text-xs text-warning-strong"
+      >
+        <p class="font-bold">Target {{ formatRupiah(confirmAmount) }} di bawah {{ formatRupiah(LOW_TARGET_THRESHOLD) }}.</p>
+        <p>Pastikan nominalnya sudah benar. Tekan "Ya, Simpan" sekali lagi untuk menyimpan, atau ubah nominalnya.</p>
+      </div>
+
       <div class="flex items-center justify-end gap-3 pt-1">
-        <AppButton :disabled="busy" @click="emit('close')">Batal</AppButton>
+        <AppButton v-if="confirmAmount !== null" :disabled="busy" @click="confirmAmount = null">Ubah Nominal</AppButton>
+        <AppButton v-else :disabled="busy" @click="emit('close')">Batal</AppButton>
         <AppButton variant="primary" type="submit" :disabled="busy">
-          {{ busy ? 'Menyimpan…' : 'Simpan Target' }}
+          {{ busy ? 'Menyimpan…' : confirmAmount !== null ? 'Ya, Simpan' : 'Simpan Target' }}
         </AppButton>
       </div>
     </form>
