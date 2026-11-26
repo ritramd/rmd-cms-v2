@@ -94,11 +94,6 @@ function handleLivePreview(machine: KelolaVendingMachine) {
   })
 }
 
-function handleAddMachine() {
-  toastVariant.value = 'success'
-  toast.value = 'Silakan hubungi administrator Smartven untuk menambahkan unit vending machine baru.'
-}
-
 onMounted(async () => {
   await loadMachines()
   if (route.query.machine && route.query.detail === 'true') {
@@ -124,7 +119,6 @@ onMounted(async () => {
         v-model:search="search"
         :machines="machines"
         @select="onMachineSelect"
-        @add-machine="handleAddMachine"
       />
 
       <!-- Loading State -->
