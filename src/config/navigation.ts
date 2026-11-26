@@ -44,12 +44,15 @@ export const navigation: NavEntry[] = [
       { label: 'Kategori Produk', to: '/product/categories' },
     ],
   },
-  // Figma: Penjualan group (1097:20207). v1 has these pages under the same paths.
+  // Figma: Penjualan group (1097:20207). v1 has these pages under the same paths; the two recaps aren't in
+  // Figma and come first, as in v1's menu.
   {
     label: 'Penjualan',
     icon: 'receipt',
     to: '/vending-sales',
     children: [
+      { label: 'Rekap Penjualan', to: '/sales-recap' },
+      { label: 'Rekap Penjualan per Produk', to: '/sales-recap-product' },
       { label: 'Vending Sales', to: '/vending-sales' },
       { label: 'Vending Sales Digital', to: '/sales-digital' },
     ],
