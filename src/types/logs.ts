@@ -12,6 +12,20 @@ export interface LogPageQuery extends LogDateRange {
   itemPerPage: number
 }
 
+/** Status filter of the transaction log; "failure" also covers "failed" (rmd-api-cms transactionLogStatus). */
+export type TransactionLogStatus = 'initiated' | 'pending' | 'expire' | 'failure' | 'deny' | 'cancel' | 'refund'
+
+export interface TransactionLogFilter extends LogDateRange {
+  status?: TransactionLogStatus
+}
+
+/** Status filter of the error log: rows reporting a cleared error, or the errors themselves. */
+export type ErrorLogStatus = 'solved' | 'unsolved'
+
+export interface ErrorLogFilter extends LogDateRange {
+  status?: ErrorLogStatus
+}
+
 /**
  * Row of GET /transaction-log/:vmcode: the same rows as GET /sales/:vmcode (rmd-api-cms
  * sales.model.ts → filterSales) but only transactions that never settled.
@@ -30,6 +44,8 @@ export interface ErrorLogRecord {
   error_message: string | null
   /** "YYYY-MM-DD HH:mm:ss", machine local time. */
   error_time: string | null
+  /** The row reports a cleared error; missing on backends from before the status filter. */
+  solved?: boolean
 }
 
 export type ChangeEntityType = 'product' | 'planogram'

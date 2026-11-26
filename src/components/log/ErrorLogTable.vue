@@ -42,27 +42,29 @@ const pagerClass =
         <colgroup>
           <col class="w-20" />
           <col />
+          <col class="w-36" />
           <col class="w-56" />
         </colgroup>
         <thead>
           <tr class="border-b border-line-faint">
             <th scope="col" :class="thClass">No</th>
             <th scope="col" :class="thClass">Pesan Error</th>
+            <th scope="col" :class="thClass">Status</th>
             <th scope="col" :class="thClass">Waktu Kejadian</th>
           </tr>
         </thead>
         <tbody :aria-busy="loading" class="text-sm">
           <tr v-if="loading">
-            <td colspan="3" class="py-16 text-center text-ink-muted">Memuat log error…</td>
+            <td colspan="4" class="py-16 text-center text-ink-muted">Memuat log error…</td>
           </tr>
           <tr v-else-if="error">
-            <td colspan="3" class="py-16 text-center text-ink-muted">
+            <td colspan="4" class="py-16 text-center text-ink-muted">
               {{ error }}
               <button type="button" class="ml-2 font-medium text-link hover:underline" @click="$emit('retry')">Coba lagi</button>
             </td>
           </tr>
           <tr v-else-if="!rows.length">
-            <td colspan="3" class="py-16 text-center text-ink-muted">{{ emptyText }}</td>
+            <td colspan="4" class="py-16 text-center text-ink-muted">{{ emptyText }}</td>
           </tr>
           <tr
             v-for="(row, i) in rows"
@@ -72,6 +74,17 @@ const pagerClass =
           >
             <td class="px-6 py-4 text-ink-muted">{{ firstIndex + i }}</td>
             <td class="px-6 py-4 break-words">{{ row.error_message || '-' }}</td>
+            <td class="px-6 py-4">
+              <!-- Pill style of TransactionStatusBadge; older backends send no flag. -->
+              <span
+                v-if="row.solved !== undefined"
+                class="inline-flex rounded-lg px-2.5 py-1 text-xs font-bold whitespace-nowrap"
+                :class="row.solved ? 'bg-success-soft text-success-strong' : 'bg-danger-soft text-danger-strong'"
+              >
+                {{ row.solved ? 'Teratasi' : 'Error' }}
+              </span>
+              <span v-else class="text-ink-muted">-</span>
+            </td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.error_time ? `${row.error_time} WIB` : '-' }}</td>
           </tr>
         </tbody>

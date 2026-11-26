@@ -1,18 +1,21 @@
 <script setup lang="ts">
 // Log Error of one machine (v1 pages/log-error/[machine].vue). No Figma frame; header follows Vending Sales
-// detail (1097:33354). No download: v1's was "coming soon" and the backend has no /log-error/download.
+// detail (1097:33354). Status filter and download are v2 additions (v1's download was "coming soon"):
+// GET /log-error/download takes the same filters as the list.
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import ErrorLogTable from '@/components/log/ErrorLogTable.vue'
+import LogDownloadButton from '@/components/log/LogDownloadButton.vue'
+import LogFilterSelect from '@/components/log/LogFilterSelect.vue'
 import DateField from '@/components/sales/DateField.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppToast from '@/components/ui/AppToast.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import { ApiError } from '@/services/api'
-import { fetchErrorLog } from '@/services/logs'
+import { downloadErrorLog, fetchErrorLog } from '@/services/logs'
 import { fetchMachineName } from '@/services/sales'
-import type { ErrorLogRecord } from '@/types/logs'
+import type { ErrorLogFilter, ErrorLogRecord, ErrorLogStatus } from '@/types/logs'
 import type { Pagination } from '@/types/product'
 
 const props = defineProps<{
@@ -23,7 +26,15 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 
+const STATUS_OPTIONS: { label: string; value: ErrorLogStatus | '' }[] = [
+  { label: 'Semua Status', value: '' },
+  { label: 'Error', value: 'unsolved' },
+  { label: 'Teratasi', value: 'solved' },
+]
+
 const queryText = (key: string) => (typeof route.query[key] === 'string' ? (route.query[key] as string) : '')
+const queryStatus = STATUS_OPTIONS.find((o) => o.value && o.value === queryText('status'))?.value ?? ''
+const status = ref<ErrorLogStatus | ''>(queryStatus)
 const startDate = ref(queryText('startDate'))
 const endDate = ref(queryText('endDate'))
 const page = ref(Number(queryText('page')) || 1)
@@ -41,10 +52,18 @@ const rangeError = computed(() =>
     ? 'Tanggal akhir tidak boleh sebelum tanggal awal.'
     : null,
 )
-const hasFilters = computed(() => Boolean(startDate.value || endDate.value))
+const hasFilters = computed(() => Boolean(status.value || startDate.value || endDate.value))
+
+/** Filters as the backend takes them: whole days (older backends compare these as-is, so send the full bounds). */
+const filter = computed<ErrorLogFilter>(() => ({
+  startDate: startDate.value ? `${startDate.value} 00:00:00` : undefined,
+  endDate: endDate.value ? `${endDate.value} 23:59:59` : undefined,
+  status: status.value || undefined,
+}))
 
 function syncQuery() {
   const query: Record<string, string> = {}
+  if (status.value) query.status = status.value
   if (startDate.value) query.startDate = startDate.value
   if (endDate.value) query.endDate = endDate.value
   if (page.value !== 1) query.page = String(page.value)
@@ -63,13 +82,7 @@ async function load() {
   error.value = null
   syncQuery()
   try {
-    const result = await fetchErrorLog(props.machine, {
-      page: page.value,
-      itemPerPage: pageSize.value,
-      // Whole days; older backends compare these as-is, so send the full bounds.
-      startDate: startDate.value ? `${startDate.value} 00:00:00` : undefined,
-      endDate: endDate.value ? `${endDate.value} 23:59:59` : undefined,
-    })
+    const result = await fetchErrorLog(props.machine, { page: page.value, itemPerPage: pageSize.value, ...filter.value })
     if (id !== requestId) return // a newer request superseded this one
     rows.value = result.data
     pagination.value = result.pagination
@@ -87,7 +100,7 @@ function reloadFromFirstPage() {
 }
 
 // Filters apply as soon as they change, like the other v2 pages (v1 had a "Terapkan" button).
-watch([startDate, endDate, pageSize], reloadFromFirstPage)
+watch([status, startDate, endDate, pageSize], reloadFromFirstPage)
 watch(page, () => void load())
 
 onMounted(() => {
@@ -98,13 +111,30 @@ onMounted(() => {
 })
 
 function resetFilters() {
+  status.value = ''
   startDate.value = ''
   endDate.value = ''
 }
 
+const downloading = ref(false)
+async function download() {
+  if (rangeError.value) {
+    toast.value = rangeError.value
+    return
+  }
+  downloading.value = true
+  try {
+    await downloadErrorLog(props.machine, filter.value)
+  } catch (err) {
+    toast.value = err instanceof ApiError ? err.message : 'Gagal mengunduh log error.'
+  } finally {
+    downloading.value = false
+  }
+}
+
 const title = computed(() => `Log Error ${machineName.value ?? props.machine}`)
 const emptyText = computed(() =>
-  hasFilters.value ? 'Tidak ada error pada rentang tanggal ini.' : 'Belum ada error tercatat di mesin ini.',
+  hasFilters.value ? 'Tidak ada log error yang cocok dengan filter.' : 'Belum ada error tercatat di mesin ini.',
 )
 </script>
 
@@ -113,12 +143,14 @@ const emptyText = computed(() =>
     <template #header>
       <PageHeader :title="title">
         <div class="flex flex-wrap items-end gap-6 lg:flex-nowrap">
+          <LogFilterSelect v-model="status" label="Status" :options="STATUS_OPTIONS" />
           <div class="flex flex-wrap gap-6 sm:flex-nowrap">
             <DateField v-model="startDate" label="Tanggal Awal" :max="endDate || undefined" />
             <DateField v-model="endDate" label="Tanggal Akhir" :min="startDate || undefined" />
           </div>
           <div class="ml-auto flex shrink-0 items-center gap-4">
             <AppButton v-if="hasFilters" icon="line-rotate-ccw" @click="resetFilters">Reset</AppButton>
+            <LogDownloadButton :busy="downloading" @click="download" />
           </div>
         </div>
       </PageHeader>
