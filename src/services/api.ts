@@ -113,7 +113,11 @@ export function apiDelete<T>(path: string): Promise<T> {
  */
 export async function apiDownload(path: string, fallbackName: string): Promise<void> {
   const response = await send(path, { method: 'GET', download: true })
+  // 204 or an empty body is no file (e.g. a backend without this export answers through a list route
+  // with 204): say so instead of saving a 0-byte .xlsx.
+  const blob = response.status === 204 ? null : await response.blob()
+  if (!blob?.size) throw new ApiError(response.status, 'Tidak ada data untuk diunduh.')
   const disposition = response.headers.get('content-disposition')
   const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)/i)
-  saveFile(await response.blob(), match ? decodeURIComponent(match[1].trim()) : fallbackName)
+  saveFile(blob, match ? decodeURIComponent(match[1].trim()) : fallbackName)
 }
