@@ -61,7 +61,14 @@ export interface SalesDateRange {
 export interface SalesFilter extends SalesDateRange {
   /** Sent as productId=12,15 (rmd-api-cms accepts one id or a comma-separated list). */
   productIds?: number[]
+  /** Part of the product SKU. */
+  sku?: string
+  /** Slot (physical position) on the machine; exact match. */
+  slot?: string
 }
+
+/** What the item filter on the machine's sales page searches by. */
+export type SalesItemFilterBy = 'product' | 'sku' | 'slot'
 
 // Row of GET /sales/:vmcode (rmd-api-cms sales.model.ts → filterSales: product, s.*, slot, p.price, sku).
 export interface SaleRecord {

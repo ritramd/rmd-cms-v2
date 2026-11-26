@@ -1,19 +1,21 @@
 <script setup lang="ts">
 // Figma: Penjualan → Vending Sales detail (1097:33354). Logic from rmd-cms v1 pages/vending-sales/[machine].vue.
+// The item filter searches by product, SKU or slot (SalesItemFilter); the header's machine search is gone,
+// it didn't belong on one machine's page.
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import downloadIcon from '@/assets/sales/download.svg'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import DateField from '@/components/sales/DateField.vue'
 import MachineSalesTable from '@/components/sales/MachineSalesTable.vue'
-import ProductSearchField from '@/components/sales/ProductSearchField.vue'
+import SalesItemFilter from '@/components/sales/SalesItemFilter.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppToast from '@/components/ui/AppToast.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import { ApiError } from '@/services/api'
 import { downloadMachineSales, fetchSoldProducts, fetchMachineName, fetchMachineSales } from '@/services/sales'
 import type { Pagination } from '@/types/product'
-import type { SoldProduct, SaleRecord, SaleSortKey } from '@/types/sales'
+import type { SalesItemFilterBy, SoldProduct, SaleRecord, SaleSortKey } from '@/types/sales'
 
 const props = defineProps<{
   /** Machine code from the URL, e.g. "VMENIG010". */
@@ -23,8 +25,8 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 
-// Filters live in the URL like v1 (?productId=&startDate=&endDate=&page=&itemPerPage=), plus the sort.
-// productId holds one or more ids, comma-separated.
+// Filters live in the URL like v1 (?productId=&startDate=&endDate=&page=&itemPerPage=), plus the sort and
+// ?sku= / ?slot=. productId holds one or more ids, comma-separated. One item filter at a time.
 const queryText = (key: string) => (typeof route.query[key] === 'string' ? (route.query[key] as string) : '')
 const queryNumber = (key: string) => Number(queryText(key)) || null
 
@@ -34,6 +36,11 @@ const productIds = ref<number[]>(
     .map(Number)
     .filter((id) => id > 0),
 )
+const filterBy = ref<SalesItemFilterBy>(queryText('slot') ? 'slot' : queryText('sku') ? 'sku' : 'product')
+/** SKU or slot text, per filterBy. */
+const filterText = ref(queryText(filterBy.value === 'product' ? '' : filterBy.value))
+const sku = computed(() => (filterBy.value === 'sku' ? filterText.value.trim() : ''))
+const slot = computed(() => (filterBy.value === 'slot' ? filterText.value.trim() : ''))
 const startDate = ref(queryText('startDate'))
 const endDate = ref(queryText('endDate'))
 const page = ref(queryNumber('page') ?? 1)
@@ -54,11 +61,15 @@ const rangeError = computed(() =>
     ? 'Tanggal akhir tidak boleh sebelum tanggal awal.'
     : null,
 )
-const hasFilters = computed(() => Boolean(productIds.value.length || startDate.value || endDate.value))
+const hasFilters = computed(() =>
+  Boolean(productIds.value.length || sku.value || slot.value || startDate.value || endDate.value),
+)
 
 function syncQuery() {
   const query: Record<string, string> = {}
   if (productIds.value.length) query.productId = productIds.value.join(',')
+  if (sku.value) query.sku = sku.value
+  if (slot.value) query.slot = slot.value
   if (startDate.value) query.startDate = startDate.value
   if (endDate.value) query.endDate = endDate.value
   if (page.value !== 1) query.page = String(page.value)
@@ -86,6 +97,8 @@ async function load() {
       page: page.value,
       itemPerPage: pageSize.value,
       productIds: productIds.value,
+      sku: sku.value,
+      slot: slot.value,
       startDate: startDate.value,
       endDate: endDate.value,
       sortBy: sortBy.value,
@@ -109,6 +122,12 @@ function reloadFromFirstPage() {
 
 // No "Apply" button in this design: filters apply as soon as they change.
 watch([productIds, startDate, endDate, pageSize, sortBy, sortDir], reloadFromFirstPage)
+// Typed SKU / slot waits for a pause in typing.
+let textTimer: ReturnType<typeof setTimeout> | undefined
+watch([sku, slot], () => {
+  clearTimeout(textTimer)
+  textTimer = setTimeout(reloadFromFirstPage, 300)
+})
 watch(page, () => void load())
 
 onMounted(() => {
@@ -122,6 +141,8 @@ onMounted(() => {
 })
 
 function resetFilters() {
+  filterBy.value = 'product'
+  filterText.value = ''
   productIds.value = []
   startDate.value = ''
   endDate.value = ''
@@ -137,6 +158,8 @@ async function download() {
   try {
     await downloadMachineSales(props.machine, {
       productIds: productIds.value,
+      sku: sku.value,
+      slot: slot.value,
       startDate: startDate.value,
       endDate: endDate.value,
     })
@@ -145,12 +168,6 @@ async function download() {
   } finally {
     downloading.value = false
   }
-}
-
-// The header search looks for machines: Enter goes back to the list with that search.
-const machineSearch = ref('')
-function searchMachines(query: string) {
-  void router.push({ name: 'vending-sales', query: query.trim() ? { search: query.trim() } : {} })
 }
 
 const title = computed(() => `Manage ${machineName.value ?? props.machine}`)
@@ -162,15 +179,15 @@ const emptyText = computed(() =>
 <template>
   <DashboardLayout :title="`Vending Sales ${machine}`">
     <template #header>
-      <PageHeader
-        v-model:search="machineSearch"
-        :title="title"
-        search-placeholder="Cari mesin..."
-        @submit="searchMachines"
-      >
+      <PageHeader :title="title">
         <!-- One row on desktop (fields shrink to fit), wrapping on smaller screens. -->
         <div class="flex flex-wrap items-end gap-6 lg:flex-nowrap">
-          <ProductSearchField v-model="productIds" :products="products" />
+          <SalesItemFilter
+            v-model:by="filterBy"
+            v-model:product-ids="productIds"
+            v-model:text="filterText"
+            :products="products"
+          />
           <div class="flex flex-wrap gap-6 sm:flex-nowrap">
             <DateField v-model="startDate" label="Start Date" :max="endDate || undefined" />
             <DateField v-model="endDate" label="End Date" :min="startDate || undefined" />
